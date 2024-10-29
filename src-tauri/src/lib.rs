@@ -64,7 +64,7 @@ pub fn run() {
             #[cfg(target_os = "windows")]
             {
                 command = "where.exe";
-                exe = "freerdp.exe";
+                exe = "freerdp-x86_64-pc-windows-msvc.exe";
             }
             #[cfg(not(target_os = "windows"))]
             {
