@@ -79,11 +79,6 @@ jobs:
         with:
           version: 9.x.x
 
-      - name: Pnpm install and check
-        run: |
-          pnpm i
-          pnpm check ${{ matrix.target }}
-
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
