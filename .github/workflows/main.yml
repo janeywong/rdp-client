@@ -77,7 +77,7 @@ jobs:
       - uses: pnpm/action-setup@v4
         name: Install pnpm
         with:
-          run_install: false
+          version: 9.x.x
 
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
