@@ -72,7 +72,7 @@ async function shell() {
   stderrMsg.value = '';
   stdoutMsg.value = '';
   const {stdout, stderr} = await Command.create('exec-sh', [
-    '-c',
+    // '-c',
     // "xfreerdp /v:10.0.151.10:3389 /u:administrator /p:lingling@2021 /t:'Server 10.0.151.10:3389' /sec:rdp",
     // "xfreerdp --help"
     "echo 'Hello World!'",
