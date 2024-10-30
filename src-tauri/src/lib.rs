@@ -68,7 +68,7 @@ pub fn run() {
                 exe = "freerdp.exe";
                 let mut dir = tauri_utils::platform::current_exe()?;
                 dir.pop();
-                let freerdp_path = dir.join(exe).as_path().display().to_string();
+                let freerdp_path = dir.join(exe).as_path().display().to_string().replace("\n", "");
                 log::info!("freerdp_path :{}", freerdp_path);
             }
             #[cfg(not(target_os = "windows"))]
