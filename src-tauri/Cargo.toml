@@ -1,7 +1,7 @@
 [package]
 name = "rdp-client"
-version = "0.1.5"
-description = "A Tauri App"
+version = "0.1.6"
+description = "windows rdp client App"
 authors = ["you"]
 edition = "2021"
 
@@ -28,4 +28,5 @@ chrono = "0.4.38"
 tauri-plugin-store = "2"
 tauri-plugin-dialog = "2"
 tauri-utils = "2"
+tauri-plugin-os = "2"
 

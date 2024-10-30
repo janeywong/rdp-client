@@ -2,7 +2,7 @@ mod cmd;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 use chrono::{DateTime, Local};
-use serde_json::{json};
+use serde_json::json;
 use tauri::Manager;
 use tauri_plugin_shell::ShellExt;
 use tauri_plugin_store::StoreExt;
@@ -10,6 +10,7 @@ use tauri_plugin_store::StoreExt;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(
@@ -68,7 +69,12 @@ pub fn run() {
                 exe = "freerdp.exe";
                 let mut dir = tauri_utils::platform::current_exe()?;
                 dir.pop();
-                let freerdp_path = dir.join(exe).as_path().display().to_string().replace("\n", "");
+                let freerdp_path = dir
+                    .join(exe)
+                    .as_path()
+                    .display()
+                    .to_string()
+                    .replace("\n", "");
                 log::info!("freerdp_path :{}", freerdp_path);
             }
             #[cfg(not(target_os = "windows"))]
@@ -79,19 +85,11 @@ pub fn run() {
             log::info!("find executable cmd: {} {}", command, exe);
             let shell = app.app_handle().shell();
             let output = tauri::async_runtime::block_on(async move {
-                shell
-                    .command(command)
-                    .args([exe])
-                    .output()
-                    .await
-                    .unwrap()
+                shell.command(command).args([exe]).output().await.unwrap()
             });
             if output.status.success() {
                 let path = String::from_utf8(output.stdout).unwrap().replace("\n", "");
-                log::info!(
-                    "Result: {}",
-                    path
-                );
+                log::info!("Result: {}", path);
                 let conf = store.unwrap();
                 conf.set("client", json!({"rdpClientPath": path}))
             } else {

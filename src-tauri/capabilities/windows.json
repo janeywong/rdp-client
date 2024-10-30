@@ -29,7 +29,10 @@
         }
       ]
     },
-    "dialog:default"
+    "dialog:default",
+    "os:default"
   ],
-  "platforms": ["windows"]
+  "platforms": [
+    "windows"
+  ]
 }

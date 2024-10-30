@@ -63,18 +63,21 @@ import {Store} from '@tauri-apps/plugin-store';
 import {Command} from '@tauri-apps/plugin-shell';
 import {IAccount} from "/@/models/setting.model.ts";
 import {error, info,} from '@tauri-apps/plugin-log';
+import {platform} from '@tauri-apps/plugin-os';
 
-// import SettingService from '/@/utils/setting-service';
-
-// const setting: SettingService = inject('settingService');
 const stdoutMsg = ref("");
 const stderrMsg = ref("");
 
 async function shell() {
   stderrMsg.value = '';
   stdoutMsg.value = '';
+  const currentPlatform = await platform();
+  await info("current platform: " + currentPlatform);
+  const firstArg = currentPlatform === 'windows' ? '/c' : '-c';
+  await info('exec-sh first arg is: ' + firstArg);
+
   const {stdout, stderr} = await Command.create('exec-sh', [
-    // '-c',
+    firstArg,
     // "xfreerdp /v:10.0.151.10:3389 /u:administrator /p:lingling@2021 /t:'Server 10.0.151.10:3389' /sec:rdp",
     // "xfreerdp --help"
     "echo 'Hello World!'",
