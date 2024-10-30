@@ -48,7 +48,7 @@
   <div class="footer">
     <div class="mb-4 functions">
       <el-button type="primary" :icon="Setting" @click="goSetting">设置</el-button>
-      <el-button type="warning" :icon="SwitchButton" @click.stop="shell" >关机</el-button>
+      <el-button type="warning" :icon="SwitchButton" @click.stop="shell">关机</el-button>
       <el-button type="warning" :icon="RefreshLeft">重启</el-button>
     </div>
   </div>
@@ -60,14 +60,16 @@ import type {FormInstance, FormRules} from 'element-plus';
 import {useRouter} from 'vue-router';
 import {RefreshLeft, Setting, SwitchButton} from '@element-plus/icons-vue';
 import {Store} from '@tauri-apps/plugin-store';
-import { Command } from '@tauri-apps/plugin-shell';
+import {Command} from '@tauri-apps/plugin-shell';
 import {IAccount} from "/@/models/setting.model.ts";
+import {error, info,} from '@tauri-apps/plugin-log';
 
 // import SettingService from '/@/utils/setting-service';
 
 // const setting: SettingService = inject('settingService');
 const stdoutMsg = ref("");
 const stderrMsg = ref("");
+
 async function shell() {
   stderrMsg.value = '';
   stdoutMsg.value = '';
@@ -78,6 +80,8 @@ async function shell() {
     "echo 'Hello World!'",
   ]).execute();
   console.log(stdout, stderr);
+  await info('stdout: ' + stdout);
+  await info('stderr: ' + stderr);
   stderrMsg.value = stderr;
   stdoutMsg.value = stdout;
 }
@@ -110,20 +114,28 @@ const rules = reactive<FormRules<typeof ruleForm>>({
 
 const submitForm = (formEl: FormInstance | undefined) => {
   if (!formEl) return;
-  formEl.validate( (valid) => {
+  formEl.validate((valid) => {
+    info(valid).catch((err) => {
+      console.error(err);
+    })
     console.log(valid);
     if (valid) {
       const command = Command.sidecar('binaries/freerdp', [
         '--help'
       ]);
-      command.execute().then(({stdout, stderr}) => {
+      command.execute().then(async ({stdout, stderr}) => {
         console.log(stdout, stderr);
+        await info(stdout);
+        await info(stderr);
         stdoutMsg.value = stdout;
         stderrMsg.value = stderr;
       });
       // window.api.send('rdpClient:connect', toRaw(ruleForm));
     } else {
       console.log('error submit!');
+      error('error submit!').catch((err) => {
+        console.error(err)
+      });
     }
   });
 };
