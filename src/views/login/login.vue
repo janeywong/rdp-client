@@ -61,7 +61,7 @@ import {useRouter} from 'vue-router';
 import {RefreshLeft, Setting, SwitchButton} from '@element-plus/icons-vue';
 import {Store} from '@tauri-apps/plugin-store';
 import {Command} from '@tauri-apps/plugin-shell';
-import {IAccount} from "/@/models/setting.model.ts";
+import {IAccount, IClientConf} from "/@/models/setting.model.ts";
 import {error, info,} from '@tauri-apps/plugin-log';
 import {platform} from '@tauri-apps/plugin-os';
 
@@ -71,17 +71,30 @@ const stderrMsg = ref("");
 async function shell() {
   stderrMsg.value = '';
   stdoutMsg.value = '';
-  const currentPlatform = await platform();
-  await info("current platform: " + currentPlatform);
-  const firstArg = currentPlatform === 'windows' ? '/c' : '-c';
-  await info('exec-sh first arg is: ' + firstArg);
 
-  const {stdout, stderr} = await Command.create('exec-sh', [
-    firstArg,
-    // "xfreerdp /v:10.0.151.10:3389 /u:administrator /p:lingling@2021 /t:'Server 10.0.151.10:3389' /sec:rdp",
-    // "xfreerdp --help"
-    "echo 'Hello World!'",
-  ]).execute();
+  const store = await Store.load('store.json');
+  const clientConf = await store.get<IClientConf>('client');
+  console.log(clientConf);
+  await info(`client: ${JSON.stringify(clientConf)}, rdpClientPath: ${clientConf?.rdpClientPath}`);
+
+  if(!clientConf?.rdpClientPath){
+    goSetting();
+    return;
+  }
+
+  const currentPlatform = await platform();
+
+  let args: string[] = [];
+
+  args.push(currentPlatform === 'windows' ? '/c' : '-c');
+
+  args.push(`${clientConf?.rdpClientPath} --help`);
+
+  await info(`${currentPlatform === 'windows' ? 'cmd.exe' : 'sh'} ${args.join(' ')}`)
+
+  const command = Command.create('exec-sh', args);
+
+  const {stdout, stderr} = await command.execute();
   console.log(stdout, stderr);
   await info('stdout: ' + stdout);
   await info('stderr: ' + stderr);

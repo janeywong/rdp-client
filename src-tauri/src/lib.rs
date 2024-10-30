@@ -74,7 +74,7 @@ pub fn run() {
                     .as_path()
                     .display()
                     .to_string()
-                    .replace("\n", "");
+                    .replace("\r\n", "");
                 log::info!("freerdp_path :{}", freerdp_path);
             }
             #[cfg(not(target_os = "windows"))]
