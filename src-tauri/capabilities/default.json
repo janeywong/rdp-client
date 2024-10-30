@@ -21,6 +21,11 @@
           "cmd": "sh",
           "args": true,
           "sidecar": false
+        },
+        {
+          "args": true,
+          "name": "binaries/freerdp",
+          "sidecar": true
         }
       ]
     },

@@ -6,6 +6,8 @@
       <el-text class="mx-1 title" type="primary">欢迎使用云桌面</el-text>
     </el-space>
   </div>
+  <p>stdout: {{ stdoutMsg }}</p>
+  <p>stderr: {{ stderrMsg }}</p>
 
   <div class="form-container">
     <el-form
@@ -36,7 +38,7 @@
         </el-checkbox>
       </el-form-item>
       <el-form-item>
-        <el-button class="loginBtn" type="primary" @click="submitForm(ruleFormRef)">
+        <el-button class="loginBtn" type="primary" @click.prevent="submitForm(ruleFormRef)">
           登录
         </el-button>
       </el-form-item>
@@ -46,7 +48,7 @@
   <div class="footer">
     <div class="mb-4 functions">
       <el-button type="primary" :icon="Setting" @click="goSetting">设置</el-button>
-      <el-button type="warning" :icon="SwitchButton">关机</el-button>
+      <el-button type="warning" :icon="SwitchButton" @click.stop="shell" >关机</el-button>
       <el-button type="warning" :icon="RefreshLeft">重启</el-button>
     </div>
   </div>
@@ -58,11 +60,27 @@ import type {FormInstance, FormRules} from 'element-plus';
 import {useRouter} from 'vue-router';
 import {RefreshLeft, Setting, SwitchButton} from '@element-plus/icons-vue';
 import {Store} from '@tauri-apps/plugin-store';
+import { Command } from '@tauri-apps/plugin-shell';
 import {IAccount} from "/@/models/setting.model.ts";
 
 // import SettingService from '/@/utils/setting-service';
 
 // const setting: SettingService = inject('settingService');
+const stdoutMsg = ref("");
+const stderrMsg = ref("");
+async function shell() {
+  stderrMsg.value = '';
+  stdoutMsg.value = '';
+  const {stdout, stderr} = await Command.create('exec-sh', [
+    '-c',
+    // "xfreerdp /v:10.0.151.10:3389 /u:administrator /p:lingling@2021 /t:'Server 10.0.151.10:3389' /sec:rdp",
+    // "xfreerdp --help"
+    "echo 'Hello World!'",
+  ]).execute();
+  console.log(stdout, stderr);
+  stderrMsg.value = stderr;
+  stdoutMsg.value = stdout;
+}
 
 const ruleFormRef = ref<FormInstance>();
 
@@ -92,8 +110,16 @@ const rules = reactive<FormRules<typeof ruleForm>>({
 
 const submitForm = (formEl: FormInstance | undefined) => {
   if (!formEl) return;
-  formEl.validate((valid) => {
+  formEl.validate( (valid) => {
+    console.log(valid);
     if (valid) {
+      const command = Command.sidecar('binaries/freerdp', [
+        '--help'
+      ]);
+      command.execute().then(output => {
+        console.log(output);
+        stdoutMsg.value = output;
+      });
       // window.api.send('rdpClient:connect', toRaw(ruleForm));
     } else {
       console.log('error submit!');
