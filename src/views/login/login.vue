@@ -118,7 +118,7 @@ const submitForm = (formEl: FormInstance | undefined) => {
       ]);
       command.execute().then(output => {
         console.log(output);
-        stdoutMsg.value = output;
+        stdoutMsg.value = output.stdout;
       });
       // window.api.send('rdpClient:connect', toRaw(ruleForm));
     } else {
