@@ -1,6 +1,30 @@
 {
   "productName": "rdp-client",
   "bundle": {
-    "externalBin": ["binaries/freerdp"]
+    "externalBin": [
+      "binaries/freerdp"
+    ]
+  },
+  "definitions": {
+    "PermissionEntry": {
+      "permissions": [
+        {
+          "identifier": "shell:allow-execute",
+          "allow": [
+            {
+              "name": "exec-sh",
+              "cmd": "cmd.exe",
+              "args": true,
+              "sidecar": false
+            },
+            {
+              "args": true,
+              "name": "binaries/freerdp",
+              "sidecar": true
+            }
+          ]
+        }
+      ]
+    }
   }
 }

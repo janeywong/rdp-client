@@ -66,8 +66,10 @@ pub fn run() {
                 // windows安装包自带，直接在安装路径下面找
                 command = "where.exe";
                 exe = "freerdp.exe";
-                let freerdp_path = tauri_utils::platform::current_exe()?.join("freerdp.exe").display().to_string();
-                log::info!("freerdp_path {}", freerdp_path);
+                let mut dir = tauri_utils::platform::current_exe()?;
+                dir.pop();
+                let freerdp_path = dir.join(exe).as_path().display().to_string();
+                log::info!("freerdp_path :{}", freerdp_path);
             }
             #[cfg(not(target_os = "windows"))]
             {

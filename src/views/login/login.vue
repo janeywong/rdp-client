@@ -116,9 +116,10 @@ const submitForm = (formEl: FormInstance | undefined) => {
       const command = Command.sidecar('binaries/freerdp', [
         '--help'
       ]);
-      command.execute().then(output => {
-        console.log(output);
-        stdoutMsg.value = output.stdout;
+      command.execute().then(({stdout, stderr}) => {
+        console.log(stdout, stderr);
+        stdoutMsg.value = stdout;
+        stderrMsg.value = stderr;
       });
       // window.api.send('rdpClient:connect', toRaw(ruleForm));
     } else {
