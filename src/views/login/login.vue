@@ -60,6 +60,7 @@
 import {reactive, ref} from 'vue';
 import type {FormInstance, FormRules} from 'element-plus';
 import {RefreshLeft, Setting, SwitchButton} from '@element-plus/icons-vue';
+import {useRouter} from "vue-router";
 
 const fullscreenLoading = ref(false);
 
@@ -126,11 +127,12 @@ const submitForm = async (formEl: FormInstance | undefined) => {
   })
 };
 
+const router = useRouter();
+
 const goSetting = () => {
-  ElMessage({
-    message: '功能待开发！',
-    type: 'warning',
-  })
+  router.push({
+    path: '/setting',
+  });
 };
 </script>
 
