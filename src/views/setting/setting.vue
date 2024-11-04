@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import {reactive} from 'vue';
+import {reactive, toRaw} from 'vue';
 import {useRouter} from 'vue-router';
 import {Document} from '@element-plus/icons-vue';
 import {CertOptions, RedirectOptions, ResolutionOptions, SecOptions} from "/@/models/constants.ts";
 import {open} from '@tauri-apps/plugin-dialog';
+import {load, Store} from '@tauri-apps/plugin-store';
+import {IClientConf} from "/@/models/setting.model.ts";
 
 const form = reactive({
   rdpClientPath: '',
@@ -18,6 +20,23 @@ const form = reactive({
   floatbar: false
 });
 
+Store.load('store.json').then(store => {
+  store.get<IClientConf>('client').then((value) => {
+    if (value) {
+      form.rdpClientPath = value.rdpClientPath || '';
+      form.sec = value.sec || 'auto';
+      form.redirectChecked = value.redirectChecked || [];
+      form.bpp = value.bpp || '32';
+      form.scale = value.scale || '100';
+      form.network = value.network || 'auto';
+      form.userMode = value.userMode || false;
+      form.resolution = value.resolution || '/f';
+      form.cert = value.cert || 'ignore';
+      form.floatbar = value.floatbar || false;
+    }
+  });
+});
+
 const fileSelector = async () => {
   const filePath = await open({
     multiple: false,
@@ -29,10 +48,15 @@ const fileSelector = async () => {
 };
 
 const onSubmit = async () => {
-  ElMessage({
-    message: '功能待开发！',
-    type: 'warning',
-  })
+  const store = await load('store.json');
+  // 保留附加配置
+
+  const clientConf = await store.get<IClientConf>('client');
+  await store.set('client', {
+    ...toRaw(form),
+    additionalOptions: clientConf?.additionalOptions || ''
+  });
+
   onReturn();
 };
 

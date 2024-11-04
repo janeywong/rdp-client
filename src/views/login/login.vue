@@ -57,10 +57,12 @@
 </template>
 
 <script setup lang="ts">
-import {reactive, ref} from 'vue';
+import {reactive, ref, toRaw} from 'vue';
 import type {FormInstance, FormRules} from 'element-plus';
 import {RefreshLeft, Setting, SwitchButton} from '@element-plus/icons-vue';
 import {useRouter} from "vue-router";
+import {load, Store} from '@tauri-apps/plugin-store';
+import {IAccount} from "/@/models/setting.model.ts";
 
 const fullscreenLoading = ref(false);
 
@@ -85,6 +87,17 @@ const ruleForm = reactive({
   username: '',
   password: '',
   remember: false,
+});
+
+Store.load('store.json').then(store => {
+  store.get<IAccount>('account').then((res) => {
+    if (res && res.remember) {
+      ruleForm.serverAddr = res.serverAddr || '';
+      ruleForm.username = res.username || '';
+      ruleForm.password = res.password || '';
+      ruleForm.remember = res.remember || false;
+    }
+  });
 });
 
 const validateServerAddr = (rule: any, value: String, callback: any) => {
@@ -119,6 +132,12 @@ const submitForm = async (formEl: FormInstance | undefined) => {
 
   if (!valid) {
     return;
+  }
+
+  const store = await load('store.json');
+  // 记住账号
+  if (ruleForm.remember) {
+    await store.set('account', toRaw(ruleForm));
   }
 
   ElMessage({
