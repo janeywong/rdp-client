@@ -1,0 +1,8 @@
+{
+  "productName": "rdp-client",
+  "bundle": {
+    "externalBin": [
+      "binaries/freerdp"
+    ]
+  }
+}
