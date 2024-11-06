@@ -13,6 +13,7 @@ fn greet(name: &str) -> String {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_http::init())
         .plugin(
             tauri_plugin_log::Builder::new()
                 .level(log::LevelFilter::Info)
@@ -22,7 +23,12 @@ pub fn run() {
                         "{} {} [{}] {}",
                         OffsetDateTime::now_utc()
                             .to_offset(UtcOffset::from_hms(8, 0, 0).unwrap())
-                            .format(&format_description::parse("[year]-[month]-[day] [hour]:[minute]:[second]").unwrap())
+                            .format(
+                                &format_description::parse(
+                                    "[year]-[month]-[day] [hour]:[minute]:[second]"
+                                )
+                                .unwrap()
+                            )
                             .unwrap(),
                         record.level(),
                         record.target(),
@@ -78,15 +84,14 @@ pub fn run() {
                                     shell.command("which").args([bin]).output().await.unwrap()
                                 });
                                 if output.status.success() {
-                                    let path = String::from_utf8(output.stdout).unwrap()
-                                        .replace("\n", "");
+                                    let path =
+                                        String::from_utf8(output.stdout).unwrap().replace("\n", "");
                                     log::info!("freerdp_path: {}", path);
                                     store.set("client", json!({"rdpClientPath": path}))
                                 } else {
                                     log::info!("Exit with code: {}", output.status.code().unwrap());
                                 }
                             }
-
                         }
                     }
                 }

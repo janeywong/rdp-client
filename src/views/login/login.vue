@@ -63,6 +63,8 @@ import {RefreshLeft, Setting, SwitchButton} from '@element-plus/icons-vue';
 import {useRouter} from "vue-router";
 import {load, Store} from '@tauri-apps/plugin-store';
 import {IAccount} from "/@/models/setting.model.ts";
+import proxmoxApi from "/@/pve/constructor.ts";
+import {info} from "@tauri-apps/plugin-log";
 
 const fullscreenLoading = ref(false);
 
@@ -139,6 +141,13 @@ const submitForm = async (formEl: FormInstance | undefined) => {
   if (ruleForm.remember) {
     await store.set('account', toRaw(ruleForm));
   }
+
+  const [host, port = '8006'] = ruleForm.serverAddr.split(':');
+
+  const proxmox = proxmoxApi({host, port: Number(port), username: ruleForm.username, password: ruleForm.password, debug: 'curl'});
+
+  const version = await proxmox.version.$get();
+  await info(`pve version: ${JSON.stringify(version)}`);
 
   ElMessage({
     message: '功能待开发！',
