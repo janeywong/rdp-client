@@ -47,6 +47,17 @@
     </el-form>
   </div>
 
+  <el-dialog v-model="dialogVisible" title="虚拟机列表" width="800" :close-on-click-modal="false"
+             :close-on-press-escape="false">
+    <el-button class="btn-refresh-vm" @click.stop="loadVmList" type="success">刷新列表</el-button>
+    <div class="vm-container gap-4">
+      <el-card v-for="vm in vmList" :key="vm.id" style="width: 300px" shadow="never" @click.stop="connectRdp(vm)">
+        <img :src="getVmIcon(vm)" class="icon"/>
+        <div style="text-align: center">{{ vm.name }}（{{ vm.node }}）</div>
+      </el-card>
+    </div>
+  </el-dialog>
+
   <div class="footer">
     <div class="mb-4 functions">
       <el-button type="primary" :icon="Setting" @click="goSetting">设置</el-button>
@@ -57,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import {reactive, ref, toRaw} from 'vue';
+import {computed, reactive, ref, Ref, toRaw} from 'vue';
 import type {FormInstance, FormRules} from 'element-plus';
 import {RefreshLeft, Setting, SwitchButton} from '@element-plus/icons-vue';
 import {useRouter} from "vue-router";
@@ -65,8 +76,19 @@ import {load, Store} from '@tauri-apps/plugin-store';
 import {IAccount} from "/@/models/setting.model.ts";
 import proxmoxApi from "/@/pve/constructor.ts";
 import {info} from "@tauri-apps/plugin-log";
+import {flattenDeep} from "lodash";
+import {Proxmox} from "/@/pve";
+import {cidrSubnet, isV4Format} from 'ip';
+import {PveInterface} from "/@/models/pve.model.ts";
 
+let proxmox: Proxmox.Api;
 const fullscreenLoading = ref(false);
+const dialogVisible = ref(false);
+const vmList: Ref<Proxmox.clusterResourcesResources[]> = ref([]);
+
+const getVmIcon = computed(() => (vm: Proxmox.clusterResourcesResources) => {
+  return vm.status === 'running' ? '/computer_active.svg' : '/computer_deactive.svg';
+});
 
 async function restart() {
   ElMessage({
@@ -108,9 +130,8 @@ const validateServerAddr = (rule: any, value: String, callback: any) => {
     return;
   }
   const [ip, port = '8006'] = value.split(':');
-  let ipRegExp = /^((25[0-5]|2[0-4][0-9]|[0-1]?[0-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|[0-1]?[0-9]?[0-9])$/;
   let portRegExp = /^(?:6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[1-9][0-9]{1,3}|[1-9])$/;
-  if (ipRegExp.test(ip.trim()) && portRegExp.test(port.trim())) {
+  if (isV4Format(ip.trim()) && portRegExp.test(port.trim())) {
     callback();
   } else {
     callback(new Error('请输入有效的服务器IP地址'));
@@ -122,6 +143,94 @@ const rules = reactive<FormRules<typeof ruleForm>>({
   username: [{required: true, message: '请输入用户名', trigger: 'blur'}],
   password: [{required: true, message: '请输入密码', trigger: 'blur'}],
 });
+
+let timerId;
+let intervalId;
+
+const connectRdp = async (vm: Proxmox.clusterResourcesResources) => {
+  fullscreenLoading.value = true;
+  if (vm.status === 'stopped') {
+    // 类似响应：UPID:pve:002C74B4:161F4203:672CC8D4:qmstart:101:root@pam:
+    const startResponse = await proxmox.nodes.$(vm.node!).qemu.$(vm.vmid!).status.start.$post();
+    await info(`${vm.name} start response: ${startResponse}`);
+    // 定时刷新虚机状态，1分钟超时
+
+    intervalId = setInterval(async () => {
+      const currentStatus = await proxmox.nodes.$(vm.node!).qemu.$(vm.vmid!).status.current.$get();
+      if (currentStatus.status === 'running') {
+        await info(`${vm.name} current status ${currentStatus.status}`);
+        clearInterval(intervalId);
+
+        timerId = setTimeout(async () => {
+          fullscreenLoading.value = false;
+          console.log(`${vm.name} 开始尝试远程`);
+          await info(`${vm.name} 开始尝试远程`);
+          clearTimeout(timerId);
+        }, 60000);
+      }
+    }, 10000);
+    return;
+  }
+  const [host] = ruleForm.serverAddr.split(':');
+
+  const conf = await proxmox.nodes.$(vm.node!).qemu.$(vm.vmid!).config.$get();
+  if (!conf.ostype?.startsWith('win')) {
+    fullscreenLoading.value = false;
+    ElMessage({
+      message: '暂时只支持windows系统！',
+      type: 'warning',
+    })
+    return;
+  }
+
+  try {
+    const interfaces = await proxmox.nodes.$(vm.node!).qemu.$(vm.vmid!).agent["network-get-interfaces"].$get();
+    const addresses = flattenDeep<PveInterface>(interfaces.result.map(item => item['ip-addresses']));
+    await info(`get network interfaces: ${JSON.stringify(addresses)}`);
+
+    // 筛选与pve主机为同网段的ipv4地址
+    const findLast = addresses.findLast(
+        ({'ip-address-type': ipAddressType, 'ip-address': ipAddress, prefix}) =>
+            ipAddressType === 'ipv4' && cidrSubnet(`${host}/${prefix}`).contains(ipAddress)
+    );
+    if (!findLast) {
+      ElMessage({
+        message: '没有找到ip，请联系管理员！',
+        type: 'warning',
+      })
+      return;
+    }
+
+    await info(`filter interfaces: ${JSON.stringify(findLast)}`);
+
+    fullscreenLoading.value = false;
+
+    ElMessage({
+      message: `${findLast['ip-address']} 远程桌面连接功能待完善！`,
+      type: 'warning',
+    })
+  } catch (err) {
+    fullscreenLoading.value = false;
+    await info(`${vm.name} get network interfaces error: ${err}`);
+    ElMessage({
+      message: `${err}`,
+      type: 'warning',
+    })
+    return;
+  }
+}
+
+const loadVmList = async () => {
+  vmList.value = [];
+  fullscreenLoading.value = true;
+  const resources = await proxmox.cluster.resources.$get({type: 'vm'});
+  vmList.value = resources;
+  fullscreenLoading.value = false;
+  dialogVisible.value = true;
+  for (let resource of resources) {
+    await info(`resource ${resource.name} ${JSON.stringify(resource)}`);
+  }
+}
 
 const submitForm = async (formEl: FormInstance | undefined) => {
   if (!formEl) return;
@@ -136,23 +245,26 @@ const submitForm = async (formEl: FormInstance | undefined) => {
     return;
   }
 
+  const [host, port = '8006'] = ruleForm.serverAddr.split(':');
+
+  proxmox = proxmoxApi({
+    host,
+    port: Number(port),
+    username: ruleForm.username,
+    password: ruleForm.password,
+    debug: 'curl'
+  });
+
+  const version = await proxmox.version.$get();
+  await info(`pve version: ${JSON.stringify(version)}`);
+
   const store = await load('store.json');
   // 记住账号
   if (ruleForm.remember) {
     await store.set('account', toRaw(ruleForm));
   }
 
-  const [host, port = '8006'] = ruleForm.serverAddr.split(':');
-
-  const proxmox = proxmoxApi({host, port: Number(port), username: ruleForm.username, password: ruleForm.password, debug: 'curl'});
-
-  const version = await proxmox.version.$get();
-  await info(`pve version: ${JSON.stringify(version)}`);
-
-  ElMessage({
-    message: '功能待开发！',
-    type: 'warning',
-  })
+  await loadVmList();
 };
 
 const router = useRouter();
@@ -192,6 +304,25 @@ const goSetting = () => {
   .loginBtn {
     margin: 0 auto;
     min-width: 100px;
+  }
+}
+
+.btn-refresh-vm {
+  margin-bottom: 20px;
+}
+
+.vm-container {
+  display: flex;
+  flex-wrap: wrap;
+  text-align: center;
+
+  .el-card {
+    flex: 1;
+    margin-right: 20px;
+  }
+
+  .el-card:last-child {
+    margin-right: 0;
   }
 }
 
