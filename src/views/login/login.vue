@@ -75,7 +75,7 @@ import {useRouter} from "vue-router";
 import {load, Store} from '@tauri-apps/plugin-store';
 import {IAccount} from "/@/models/setting.model.ts";
 import proxmoxApi from "/@/pve/constructor.ts";
-import {info} from "@tauri-apps/plugin-log";
+import {error, info} from "@tauri-apps/plugin-log";
 import {flattenDeep} from "lodash";
 import {Proxmox} from "/@/pve";
 import {cidrSubnet, isV4Format} from 'ip';
@@ -163,7 +163,6 @@ const connectRdp = async (vm: Proxmox.clusterResourcesResources) => {
 
         timerId = setTimeout(async () => {
           fullscreenLoading.value = false;
-          console.log(`${vm.name} 开始尝试远程`);
           await info(`${vm.name} 开始尝试远程`);
           clearTimeout(timerId);
         }, 60000);
@@ -223,48 +222,78 @@ const connectRdp = async (vm: Proxmox.clusterResourcesResources) => {
 const loadVmList = async () => {
   vmList.value = [];
   fullscreenLoading.value = true;
-  const resources = await proxmox.cluster.resources.$get({type: 'vm'});
-  vmList.value = resources;
-  fullscreenLoading.value = false;
-  dialogVisible.value = true;
-  for (let resource of resources) {
-    await info(`resource ${resource.name} ${JSON.stringify(resource)}`);
+  try {
+    const resources = await proxmox.cluster.resources.$get({type: 'vm'});
+    vmList.value = resources;
+    fullscreenLoading.value = false;
+    dialogVisible.value = true;
+    for (let resource of resources) {
+      await info(`resource ${resource.name} ${JSON.stringify(resource)}`);
+    }
+  } catch (err) {
+    await error(`load vm resources failed: ${JSON.stringify(err)}`);
   }
 }
 
 const submitForm = async (formEl: FormInstance | undefined) => {
+  await info(`login params: ${JSON.stringify(toRaw(ruleForm))}`);
   if (!formEl) return;
-  const valid = await formEl.validate().catch(async () => {
+
+  try {
+    const valid = await formEl.validate();
+    if (!valid) {
+      ElMessage({
+        message: '表单验证失败！',
+        type: 'warning',
+      });
+      return;
+    }
+  } catch (e) {
     ElMessage({
       message: '表单验证异常！',
       type: 'warning',
     });
-  });
-
-  if (!valid) {
+    await error(`login form validation failed: ${JSON.stringify(e)}`);
     return;
   }
 
   const [host, port = '8006'] = ruleForm.serverAddr.split(':');
 
+  try {
+    // 记住账号
+    if (ruleForm.remember) {
+      await info('save account info')
+      const store = await load('store.json');
+      await store.set('account', toRaw(ruleForm));
+    }
+  } catch (e) {
+    await error(`save account failed: ${JSON.stringify(e)}`);
+  }
+
+  await info('begin init proxmox api');
+
   proxmox = proxmoxApi({
     host,
     port: Number(port),
     username: ruleForm.username,
-    password: ruleForm.password,
-    debug: 'curl'
+    password: ruleForm.password
   });
 
-  const version = await proxmox.version.$get();
-  await info(`pve version: ${JSON.stringify(version)}`);
+  await info('end init proxmox api');
 
-  const store = await load('store.json');
-  // 记住账号
-  if (ruleForm.remember) {
-    await store.set('account', toRaw(ruleForm));
+  try {
+    await info('begin get pve versions');
+    const version = await proxmox.version.$get();
+    await info(`pve version: ${JSON.stringify(version)}`);
+
+    await loadVmList();
+  } catch (err) {
+    ElMessage({
+      message: `${err}`,
+      type: 'warning'
+    });
+    await error(`get pve version failed: ${JSON.stringify(err)}`);
   }
-
-  await loadVmList();
 };
 
 const router = useRouter();

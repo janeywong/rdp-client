@@ -2,6 +2,7 @@ use serde_json::json;
 use tauri::Manager;
 use tauri_plugin_shell::ShellExt;
 use tauri_plugin_store::StoreExt;
+use tauri_plugin_log::{Target, TargetKind};
 use time::{format_description, OffsetDateTime, UtcOffset};
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
@@ -16,6 +17,7 @@ pub fn run() {
         .plugin(tauri_plugin_http::init())
         .plugin(
             tauri_plugin_log::Builder::new()
+                .targets([Target::new(TargetKind::Stdout), Target::new(TargetKind::Webview), ])
                 .level(log::LevelFilter::Info)
                 // 通过自定义日志格式修复时区问题
                 .format(|out, message, record| {
@@ -27,7 +29,7 @@ pub fn run() {
                                 &format_description::parse(
                                     "[year]-[month]-[day] [hour]:[minute]:[second]"
                                 )
-                                .unwrap()
+                                    .unwrap()
                             )
                             .unwrap(),
                         record.level(),
