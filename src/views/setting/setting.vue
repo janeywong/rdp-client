@@ -7,10 +7,12 @@ import {open} from '@tauri-apps/plugin-dialog';
 import {load, Store} from '@tauri-apps/plugin-store';
 import {IClientConf} from "/@/models/setting.model.ts";
 
+const empty: number[] = [];
+
 const form = reactive({
   rdpClientPath: '',
   sec: 'auto',
-  redirectChecked: [],
+  redirectChecked: empty,
   bpp: '32',
   scale: '100',
   network: 'auto',
@@ -25,7 +27,7 @@ Store.load('store.json').then(store => {
     if (value) {
       form.rdpClientPath = value.rdpClientPath || '';
       form.sec = value.sec || 'auto';
-      form.redirectChecked = value.redirectChecked || [];
+      form.redirectChecked = value.redirectChecked || empty;
       form.bpp = value.bpp || '32';
       form.scale = value.scale || '100';
       form.network = value.network || 'auto';

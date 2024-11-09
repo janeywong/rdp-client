@@ -73,14 +73,14 @@ import type {FormInstance, FormRules} from 'element-plus';
 import {RefreshLeft, Setting, SwitchButton} from '@element-plus/icons-vue';
 import {useRouter} from "vue-router";
 import {load, Store} from '@tauri-apps/plugin-store';
-import {IAccount} from "/@/models/setting.model.ts";
+import {IAccount, IClientConf} from "/@/models/setting.model.ts";
 import proxmoxApi from "/@/pve/constructor.ts";
 import {error, info} from "@tauri-apps/plugin-log";
 import {flattenDeep} from "lodash";
 import {Proxmox} from "/@/pve";
 import {cidrSubnet, isV4Format} from 'ip';
 import {PveInterface} from "/@/models/pve.model.ts";
-import {fetch} from "@tauri-apps/plugin-http";
+import {connect} from "/@/utils/freerdp.ts";
 
 let proxmox: Proxmox.Api;
 const fullscreenLoading = ref(false);
@@ -92,26 +92,6 @@ const getVmIcon = computed(() => (vm: Proxmox.clusterResourcesResources) => {
 });
 
 async function restart() {
-  const [host, port = '8006'] = ruleForm.serverAddr.split(':');
-  try {
-    const res = await fetch(`https://${host}:${port}/api2/json/access/ticket`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        username: ruleForm.username,
-        password: ruleForm.password,
-      })
-    });
-
-    console.log(res.headers);
-    res.headers.forEach((value, key) => {
-      console.log(`${key}: ${value}`);
-    })
-  } catch (error) {
-    console.error(error);
-  }
   ElMessage({
     message: '功能待开发！',
     type: 'warning',
@@ -174,7 +154,22 @@ const connectRdp = async (vm: Proxmox.clusterResourcesResources) => {
     // 类似响应：UPID:pve:002C74B4:161F4203:672CC8D4:qmstart:101:root@pam:
     const startResponse = await proxmox.nodes.$(vm.node!).qemu.$(vm.vmid!).status.start.$post();
     await info(`${vm.name} start response: ${startResponse}`);
+
+    if (startResponse.includes("qmstart")) {
+      ElMessage({
+        message: '已发送开机指令，1分钟后会自动尝试连接！',
+        type: 'success',
+      })
+    }
+
     // 定时刷新虚机状态，1分钟超时
+    if (!!intervalId) {
+      clearInterval(intervalId);
+    }
+
+    if (!!timerId) {
+      clearInterval(timerId);
+    }
 
     intervalId = setInterval(async () => {
       const currentStatus = await proxmox.nodes.$(vm.node!).qemu.$(vm.vmid!).status.current.$get();
@@ -186,18 +181,21 @@ const connectRdp = async (vm: Proxmox.clusterResourcesResources) => {
 
         timerId = setTimeout(async () => {
           fullscreenLoading.value = false;
-          await info(`${vm.name} 开始尝试远程`);
+          await info(`${vm.name} 开始尝试远程 vm: ${JSON.stringify(vm)}`);
+          await connectRdp({...vm, status: 'running'});
           clearTimeout(timerId);
         }, 60000);
       }
     }, 5000);
     return;
   }
+
   const [host] = ruleForm.serverAddr.split(':');
 
   const conf = await proxmox.nodes.$(vm.node!).qemu.$(vm.vmid!).config.$get();
   if (!conf.ostype?.startsWith('win')) {
     fullscreenLoading.value = false;
+    await info(`${vm.name} unsupported operating system ostype: ${conf.ostype}`);
     ElMessage({
       message: '暂时只支持windows系统！',
       type: 'warning',
@@ -227,10 +225,18 @@ const connectRdp = async (vm: Proxmox.clusterResourcesResources) => {
 
     fullscreenLoading.value = false;
 
-    ElMessage({
-      message: `${findLast['ip-address']} 远程桌面连接功能待完善！`,
-      type: 'warning',
-    })
+    const store = await load('store.json');
+    const clientConf = await store.get<IClientConf>('client');
+    await info(`client: ${JSON.stringify(clientConf)}, rdpClientPath: ${clientConf?.rdpClientPath}`);
+
+    if (!clientConf?.rdpClientPath) {
+      goSetting();
+      return;
+    }
+
+    const [username, realm] = ruleForm.username.split('@');
+
+    await connect(findLast['ip-address'], `${realm}\\\\${username}`, ruleForm.password, clientConf);
   } catch (err) {
     fullscreenLoading.value = false;
     await info(`${vm.name} get network interfaces error: ${err}`);
@@ -259,12 +265,17 @@ const loadVmList = async () => {
 }
 
 const submitForm = async (formEl: FormInstance | undefined) => {
+  fullscreenLoading.value = true;
   await info(`login params: ${JSON.stringify(toRaw(ruleForm))}`);
-  if (!formEl) return;
+  if (!formEl) {
+    fullscreenLoading.value = false;
+    return;
+  }
 
   try {
     const valid = await formEl.validate();
     if (!valid) {
+      fullscreenLoading.value = false;
       ElMessage({
         message: '表单验证失败！',
         type: 'warning',
@@ -272,6 +283,7 @@ const submitForm = async (formEl: FormInstance | undefined) => {
       return;
     }
   } catch (e) {
+    fullscreenLoading.value = false;
     ElMessage({
       message: '表单验证异常！',
       type: 'warning',
@@ -290,6 +302,7 @@ const submitForm = async (formEl: FormInstance | undefined) => {
       await store.set('account', toRaw(ruleForm));
     }
   } catch (e) {
+    fullscreenLoading.value = false;
     await error(`save account failed: ${JSON.stringify(e)}`);
   }
 
@@ -317,6 +330,7 @@ const submitForm = async (formEl: FormInstance | undefined) => {
     });
     await error(`get pve version failed: ${JSON.stringify(err)}`);
   }
+  fullscreenLoading.value = false;
 };
 
 const router = useRouter();

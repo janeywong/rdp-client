@@ -12,6 +12,7 @@
     "store:default",
     "log:default",
     "http:default",
+    "os:default",
     {
       "identifier": "http:default",
       "allow": [

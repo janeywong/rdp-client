@@ -11,7 +11,7 @@ export interface IClientConf{
     // 安全协议
     sec?:string;
     // 资源重定向
-    redirectChecked?:never[];
+    redirectChecked?:number[];
     // 色深
     bpp?: string;
     // 缩放
