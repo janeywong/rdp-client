@@ -234,9 +234,7 @@ const connectRdp = async (vm: Proxmox.clusterResourcesResources) => {
       return;
     }
 
-    const [username, realm] = ruleForm.username.split('@');
-
-    await connect(findLast['ip-address'], `${realm}\\\\${username}`, ruleForm.password, clientConf);
+    await connect(findLast['ip-address'], ruleForm.username, ruleForm.password, clientConf);
   } catch (err) {
     fullscreenLoading.value = false;
     await info(`${vm.name} get network interfaces error: ${err}`);

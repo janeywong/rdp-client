@@ -83,7 +83,12 @@ export async function connect(hostIp: string, username: string, password: string
         const currentPlatform = await platform();
         const cmd = currentPlatform === 'windows' ? 'powershell.exe' : 'sh';
 
-        let args = ['-c', parseCommand(hostIp, username, password, clientConf)];
+        const [user, realm] = username.split('@');
+
+        // win11 测试只需要一个\
+        const u = currentPlatform === 'windows' ? `${realm}\\${user}` : `${realm}\\\\${user}`;
+
+        let args = ['-c', parseCommand(hostIp, u, password, clientConf)];
 
         await info(`execute command: ${cmd} ${args.join(' ')}`)
 
