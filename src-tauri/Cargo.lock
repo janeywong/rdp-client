@@ -1130,9 +1130,9 @@ dependencies = [
 
 [[package]]
 name = "fern"
-version = "0.6.2"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d9f0c14694cbd524c8720dd69b0e3179344f04ebb5f90f2e4a440c6ea3b2f1ee"
+checksum = "69ff9c9d5fb3e6da8ac2f77ab76fe7e8087d512ce095200f8f29ac5b656cf6dc"
 dependencies = [
  "log",
 ]
@@ -3152,7 +3152,7 @@ checksum = "20675572f6f24e9e76ef639bc5552774ed45f1c30e2951e1e99c59888861c539"
 
 [[package]]
 name = "rdp-client"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "log",
  "serde",
@@ -4146,8 +4146,7 @@ dependencies = [
 [[package]]
 name = "tauri-plugin-dialog"
 version = "2.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4307310e1d2c09ab110235834722e7c2b85099b683e1eb7342ab351b0be5ada3"
+source = "git+https://github.com/janeywong/plugins-workspace?branch=v2#3173ca9dc8b06f9ebb87d30f2a5c3ed0193c7ff7"
 dependencies = [
  "log",
  "raw-window-handle",
@@ -4164,8 +4163,7 @@ dependencies = [
 [[package]]
 name = "tauri-plugin-fs"
 version = "2.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "96ba7d46e86db8c830d143ef90ab5a453328365b0cc834c24edea4267b16aba0"
+source = "git+https://github.com/janeywong/plugins-workspace?branch=v2#3173ca9dc8b06f9ebb87d30f2a5c3ed0193c7ff7"
 dependencies = [
  "anyhow",
  "dunce",
@@ -4185,8 +4183,7 @@ dependencies = [
 [[package]]
 name = "tauri-plugin-http"
 version = "2.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c752aee1b00ec3c4d4f440095995d9bd2c640b478f2067d1fba388900b82eb96"
+source = "git+https://github.com/janeywong/plugins-workspace?branch=v2#3173ca9dc8b06f9ebb87d30f2a5c3ed0193c7ff7"
 dependencies = [
  "data-url",
  "http",
@@ -4206,9 +4203,8 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-log"
-version = "2.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a49f2c05d15e6375ab7f7e528b3049150ba4dfafdf61f85e5178d0aef18e3f5"
+version = "2.0.2"
+source = "git+https://github.com/janeywong/plugins-workspace?branch=v2#3173ca9dc8b06f9ebb87d30f2a5c3ed0193c7ff7"
 dependencies = [
  "android_logger",
  "byte-unit",
@@ -4229,8 +4225,7 @@ dependencies = [
 [[package]]
 name = "tauri-plugin-shell"
 version = "2.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ad7880c5586b6b2104be451e3d7fc0f3800c84bda69e9ba81c828f87cb34267"
+source = "git+https://github.com/janeywong/plugins-workspace?branch=v2#3173ca9dc8b06f9ebb87d30f2a5c3ed0193c7ff7"
 dependencies = [
  "encoding_rs",
  "log",
@@ -4250,8 +4245,7 @@ dependencies = [
 [[package]]
 name = "tauri-plugin-store"
 version = "2.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e9a580be53f04bb62422d239aa798e88522877f58a0d4a0e745f030055a51bb4"
+source = "git+https://github.com/janeywong/plugins-workspace?branch=v2#3173ca9dc8b06f9ebb87d30f2a5c3ed0193c7ff7"
 dependencies = [
  "dunce",
  "log",

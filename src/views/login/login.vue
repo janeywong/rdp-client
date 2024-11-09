@@ -80,6 +80,7 @@ import {flattenDeep} from "lodash";
 import {Proxmox} from "/@/pve";
 import {cidrSubnet, isV4Format} from 'ip';
 import {PveInterface} from "/@/models/pve.model.ts";
+import {fetch} from "@tauri-apps/plugin-http";
 
 let proxmox: Proxmox.Api;
 const fullscreenLoading = ref(false);
@@ -91,6 +92,26 @@ const getVmIcon = computed(() => (vm: Proxmox.clusterResourcesResources) => {
 });
 
 async function restart() {
+  const [host, port = '8006'] = ruleForm.serverAddr.split(':');
+  try {
+    const res = await fetch(`https://${host}:${port}/api2/json/access/ticket`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        username: ruleForm.username,
+        password: ruleForm.password,
+      })
+    });
+
+    console.log(res.headers);
+    res.headers.forEach((value, key) => {
+      console.log(`${key}: ${value}`);
+    })
+  } catch (error) {
+    console.error(error);
+  }
   ElMessage({
     message: '功能待开发！',
     type: 'warning',
@@ -159,6 +180,8 @@ const connectRdp = async (vm: Proxmox.clusterResourcesResources) => {
       const currentStatus = await proxmox.nodes.$(vm.node!).qemu.$(vm.vmid!).status.current.$get();
       if (currentStatus.status === 'running') {
         await info(`${vm.name} current status ${currentStatus.status}`);
+        // 重新加载虚机列表刷新状态
+        await loadVmList();
         clearInterval(intervalId);
 
         timerId = setTimeout(async () => {
@@ -167,7 +190,7 @@ const connectRdp = async (vm: Proxmox.clusterResourcesResources) => {
           clearTimeout(timerId);
         }, 60000);
       }
-    }, 10000);
+    }, 5000);
     return;
   }
   const [host] = ruleForm.serverAddr.split(':');
