@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import {reactive, toRaw} from 'vue';
 import {useRouter} from 'vue-router';
-import {Document} from '@element-plus/icons-vue';
 import {CertOptions, RedirectOptions, ResolutionOptions, SecOptions} from "/@/models/constants.ts";
 import {open} from '@tauri-apps/plugin-dialog';
 import {load, Store} from '@tauri-apps/plugin-store';
@@ -75,10 +74,10 @@ const onReturn = () => {
     <el-form :model="form" label-width="120" style="max-width: 600px">
       <el-divider content-position="center">客户端配置</el-divider>
       <el-form-item label="RDP客户端路径" prop="rdpClientPath">
-        <el-input v-model="form.rdpClientPath" style="width: 79%"/>
-        <div class="file-selector">
+        <el-text style="width: 79%">{{form.rdpClientPath}}</el-text>
+        <!--<div class="file-selector">
           <el-button type="primary" :icon="Document" @click="fileSelector">浏览</el-button>
-        </div>
+        </div>-->
       </el-form-item>
       <el-form-item label="请选择安全协议">
         <el-select

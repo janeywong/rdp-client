@@ -1,17 +1,17 @@
-export interface IAccount{
-    serverAddr?:string;
-    username?:string;
-    password?:string;
-    remember?:boolean;
+export interface IAccount {
+    serverAddr?: string;
+    username?: string;
+    password?: string;
+    remember?: boolean;
 }
 
-export interface IClientConf{
+export interface IClientConf {
     // rdp客户端路径
-    rdpClientPath?:string;
+    rdpClientPath?: string;
     // 安全协议
-    sec?:string;
+    sec?: string;
     // 资源重定向
-    redirectChecked?:number[];
+    redirectChecked?: number[];
     // 色深
     bpp?: string;
     // 缩放
@@ -28,4 +28,30 @@ export interface IClientConf{
     additionalOptions?: string;
     // 悬浮条
     floatbar?: boolean;
+}
+
+export class ClientConf implements IClientConf {
+    constructor(
+        public rdpClientPath?: string,
+        public sec: string = 'auto',
+        public redirectChecked: number[] = [],
+        public bpp: string = '32',
+        public scale: string = '100',
+        public network: string = 'auto',
+        public userMode: boolean = false,
+        public resolution: string = '/f',
+        public cert: string = 'ignore',
+        public floatbar: boolean = true,
+    ){
+        this.rdpClientPath = rdpClientPath;
+        this.sec = sec;
+        this.redirectChecked = redirectChecked;
+        this.bpp = bpp;
+        this.scale = scale;
+        this.network = network;
+        this.userMode = userMode;
+        this.resolution = resolution;
+        this.cert = cert;
+        this.floatbar = floatbar;
+    }
 }

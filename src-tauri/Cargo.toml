@@ -1,6 +1,6 @@
 [package]
 name = "rdp-client"
-version = "0.1.5"
+version = "0.1.6"
 description = "A Windows Rdp Client App"
 authors = ["JJ"]
 edition = "2021"
@@ -31,4 +31,7 @@ tauri-plugin-log =  { git = "https://github.com/janeywong/plugins-workspace", br
 tauri-plugin-os = { git = "https://github.com/janeywong/plugins-workspace", branch = "v2" }
 tauri-plugin-http = { git = "https://github.com/janeywong/plugins-workspace", branch = "v2", features = ["unsafe-headers", "cookies"] }
 
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-updater = { git = "https://github.com/janeywong/plugins-workspace", branch = "v2" }
 
+tauri-plugin-process = { git = "https://github.com/janeywong/plugins-workspace", branch = "v2" }

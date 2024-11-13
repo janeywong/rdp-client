@@ -25,9 +25,9 @@ export const RedirectOptions = [
         value: 8, label: '麦克风重定向',
     }, {
         value: 16, label: '打印重定向',
-    }, {
+    }/*, {
         value: 32, label: 'USB重定向',
-    }, {
+    }*/, {
         value: 64, label: '剪切板重定向',
     },
 ];

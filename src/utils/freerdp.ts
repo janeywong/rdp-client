@@ -1,13 +1,16 @@
-import {IClientConf} from "/@/models/setting.model.ts";
+import {ClientConf, IClientConf} from "/@/models/setting.model.ts";
 import {platform} from "@tauri-apps/plugin-os";
 import {error, info} from "@tauri-apps/plugin-log";
 import {Command} from "@tauri-apps/plugin-shell";
+import {defaults} from "lodash";
 
 export function parseCommand(hostIp: string, username: string, password: string, clientConf: IClientConf): string {
     let args: string[] = [];
     args.push(clientConf?.rdpClientPath || '');
     // TODO 根据rdp协议构建参数，暂时只兼容freerdp
     args.push(`/v:${hostIp} /u:${username} /p:${password}`);
+
+    clientConf = defaults(clientConf, new ClientConf());
 
     if (!!clientConf) {
         if (clientConf.sec && clientConf.sec !== 'auto') {
@@ -66,10 +69,10 @@ export function parseCommand(hostIp: string, username: string, password: string,
             args.push('/printer')
         }
         // USB
-        if (clientConf.redirectChecked.includes(32)) {
+        /*if (clientConf.redirectChecked.includes(32)) {
             // mac
             args.push('/usb:list')
-        }
+        }*/
         // 剪切板重定向
         if (clientConf.redirectChecked.includes(64)) {
             args.push('+clipboard')

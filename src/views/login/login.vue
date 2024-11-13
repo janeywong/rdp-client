@@ -52,7 +52,7 @@
     <el-button class="btn-refresh-vm" @click.stop="loadVmList" type="success">刷新列表</el-button>
     <div class="vm-container gap-4">
       <el-card v-for="vm in vmList" :key="vm.id" style="width: 300px" shadow="never" @click.stop="connectRdp(vm)">
-        <img :src="getVmIcon(vm)" class="icon"/>
+        <img :src="getVmIcon(vm)" class="vm-icon"/>
         <div style="text-align: center">{{ vm.name }}（{{ vm.node }}）</div>
       </el-card>
     </div>
@@ -60,9 +60,7 @@
 
   <div class="footer">
     <div class="mb-4 functions">
-      <el-button type="primary" :icon="Setting" @click="goSetting">设置</el-button>
-      <el-button type="warning" :icon="SwitchButton" @click.stop="shell">关机</el-button>
-      <el-button type="warning" :icon="RefreshLeft" @click.stop="restart">重启</el-button>
+      <el-button type="primary" style="min-width: 100px;margin: 0 auto;" :icon="Setting" @click="goSetting">设置</el-button>
     </div>
   </div>
 </template>
@@ -70,7 +68,7 @@
 <script setup lang="ts">
 import {computed, reactive, ref, Ref, toRaw} from 'vue';
 import type {FormInstance, FormRules} from 'element-plus';
-import {RefreshLeft, Setting, SwitchButton} from '@element-plus/icons-vue';
+import {Setting} from '@element-plus/icons-vue';
 import {useRouter} from "vue-router";
 import {load, Store} from '@tauri-apps/plugin-store';
 import {IAccount, IClientConf} from "/@/models/setting.model.ts";
@@ -90,20 +88,6 @@ const vmList: Ref<Proxmox.clusterResourcesResources[]> = ref([]);
 const getVmIcon = computed(() => (vm: Proxmox.clusterResourcesResources) => {
   return vm.status === 'running' ? '/computer_active.svg' : '/computer_deactive.svg';
 });
-
-async function restart() {
-  ElMessage({
-    message: '功能待开发！',
-    type: 'warning',
-  })
-}
-
-async function shell() {
-  ElMessage({
-    message: '功能待开发！',
-    type: 'warning',
-  })
-}
 
 const ruleFormRef = ref<FormInstance>();
 
@@ -217,7 +201,8 @@ const connectRdp = async (vm: Proxmox.clusterResourcesResources) => {
       ElMessage({
         message: '没有找到ip，请联系管理员！',
         type: 'warning',
-      })
+      });
+      fullscreenLoading.value = false;
       return;
     }
 
@@ -227,6 +212,7 @@ const connectRdp = async (vm: Proxmox.clusterResourcesResources) => {
 
     const store = await load('store.json');
     const clientConf = await store.get<IClientConf>('client');
+
     await info(`client: ${JSON.stringify(clientConf)}, rdpClientPath: ${clientConf?.rdpClientPath}`);
 
     if (!clientConf?.rdpClientPath) {
@@ -258,6 +244,7 @@ const loadVmList = async () => {
       await info(`resource ${resource.name} ${JSON.stringify(resource)}`);
     }
   } catch (err) {
+    fullscreenLoading.value = false;
     await error(`load vm resources failed: ${JSON.stringify(err)}`);
   }
 }
@@ -377,16 +364,23 @@ const goSetting = () => {
 
 .vm-container {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: row;
+  column-gap: 10px;
+  overflow-x: scroll;
+  overflow-y: hidden;
+  flex-wrap: nowrap;
   text-align: center;
 
-  .el-card {
-    flex: 1;
-    margin-right: 20px;
+  .vm-icon {
+    max-width: 200px;
+    width: 95%;
+    height: 95%;
   }
 
-  .el-card:last-child {
-    margin-right: 0;
+  .el-card {
+    max-width: 270px;
+    flex-shrink: 0;
+    margin-bottom: 20px;
   }
 }
 
