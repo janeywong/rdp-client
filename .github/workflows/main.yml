@@ -2,11 +2,8 @@ name: "publish"
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 # `tauri-action` can also upload app bundles to an existing GitHub release.

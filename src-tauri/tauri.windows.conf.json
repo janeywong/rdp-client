@@ -3,6 +3,11 @@
   "bundle": {
     "externalBin": [
       "binaries/freerdp"
-    ]
+    ],
+    "windows": {
+      "nsis": {
+        "languages": ["SimpChinese"]
+      }
+    }
   }
 }

@@ -66,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-import {computed, reactive, ref, Ref, toRaw} from 'vue';
+import {computed, reactive, ref, Ref, toRaw, onMounted} from 'vue';
 import type {FormInstance, FormRules} from 'element-plus';
 import {Setting} from '@element-plus/icons-vue';
 import {useRouter} from "vue-router";
@@ -79,6 +79,11 @@ import {Proxmox} from "/@/pve";
 import {cidrSubnet, isV4Format} from 'ip';
 import {PveInterface} from "/@/models/pve.model.ts";
 import {connect} from "/@/utils/freerdp.ts";
+import {checkForAppUpdates} from '/@/utils/updater.ts'
+
+onMounted(async () => {
+  await checkForAppUpdates();
+})
 
 let proxmox: Proxmox.Api;
 const fullscreenLoading = ref(false);
