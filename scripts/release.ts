@@ -1,7 +1,7 @@
-import { readFileSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
-import { name, version } from "../package.json";
+import {readFileSync, writeFileSync} from "node:fs";
+import {dirname, resolve} from "node:path";
+import {fileURLToPath} from "node:url";
+import {name, version} from "../package.json";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -12,8 +12,7 @@ console.log(__dirname);
     const lockPath = resolve(__dirname, "..", "src-tauri", "Cargo.lock");
     const tauriConfigPath = resolve(__dirname, "..", "src-tauri", "tauri.conf.json");
     let content = readFileSync(tauriConfigPath, "utf-8");
-    const jsonData = JSON.parse(content);
-    jsonData.version = version;
+    const jsonData = {...JSON.parse(content), version};
     console.log(jsonData);
 
     writeFileSync(tauriConfigPath, JSON.stringify(jsonData, null, 2));
