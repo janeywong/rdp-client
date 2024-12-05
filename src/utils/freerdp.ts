@@ -25,8 +25,8 @@ export function parseCommand(hostIp: string, username: string, password: string,
         if (clientConf.network) {
             args.push(`/network:${clientConf.network}`)
         }
-        if (clientConf.userMode) {
-            args.push('admin');
+        if (clientConf.adminMode) {
+            args.push('+admin');
         }
         // 悬浮条，全屏才显示
         if (clientConf.floatbar) {

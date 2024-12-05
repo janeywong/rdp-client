@@ -1,3 +1,17 @@
+export const RdpClientOptions = [
+    {
+        value: 'mstsc', label: 'mstsc', tip: 'window自带的远程桌面客户端'
+    }, {
+        value: 'freerdp', label: 'freerdp', tip: '一个免费开源实现的一个远程桌面协议(RDP)工具'
+    }
+]
+
+export const AudioModeOptions = [
+    {value: '0', label: '在本地设备上播放声音'},
+    {value: '1', label: '在远程会话中播放声音'},
+    {value: '2', label: '不播放声音'},
+]
+
 export const SecOptions = [
     {
         value: 'auto', label: 'auto',
@@ -14,22 +28,30 @@ export const SecOptions = [
     },
 ];
 
+export enum RdpRedirect {
+    DRIVER = 2,
+    MICROPHONE = 8,
+    PRINTER = 16,
+    SMART_CARD = 32,
+    CLIPBOARD = 64,
+    CAMERA = 128
+}
+
 export const RedirectOptions = [
     {
-        value: 1, label: '多显示器',
+        value: 2, label: '驱动器',
     }, {
-        value: 2, label: '驱动器重定向',
+        value: 16, label: '打印机',
     }, {
-        value: 4, label: '声音重定向',
+        value: 32, label: '智能卡',
     }, {
-        value: 8, label: '麦克风重定向',
+        value: 8, label: '麦克风',
     }, {
-        value: 16, label: '打印重定向',
-    }/*, {
-        value: 32, label: 'USB重定向',
-    }*/, {
-        value: 64, label: '剪切板重定向',
+        value: 128, label: '摄像头',
+    }, {
+        value: 64, label: '剪切板',
     },
+    // 稍候插入的驱动器 drivestoredirect:s:DynamicDrives
 ];
 
 export const ResolutionOptions = [

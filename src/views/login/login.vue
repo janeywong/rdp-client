@@ -1,7 +1,9 @@
 <template>
   <div class="icon-header">
+    <span class="version">v{{ version }}</span>
+    <el-button class="setting-btn" type="warning" :icon="Setting" circle @click="goSetting"></el-button>
     <el-space direction="vertical">
-      <img src="/tauri.svg" class="icon"/>
+      <img src="/hi-new.jpg" class="icon"/>
       <el-text class="mx-1 title" type="primary">欢迎使用云桌面</el-text>
     </el-space>
   </div>
@@ -15,11 +17,6 @@
         label-width="20"
         class="demo-ruleForm"
     >
-      <el-form-item prop="serverAddr">
-        <el-input v-model="ruleForm.serverAddr" placeholder="服务器IP地址" type="text" autocomplete="off">
-          <template #prepend>https://</template>
-        </el-input>
-      </el-form-item>
       <el-form-item prop="username">
         <el-input v-model="ruleForm.username" placeholder="用户名" type="text" autocomplete="off"/>
       </el-form-item>
@@ -33,7 +30,7 @@
       </el-form-item>
       <el-form-item>
         <el-checkbox v-model="ruleForm.remember" name="type" size="large">
-          自动登录
+          记住账号
         </el-checkbox>
       </el-form-item>
       <el-form-item>
@@ -57,31 +54,55 @@
       </el-card>
     </div>
   </el-dialog>
-
-  <div class="footer">
-    <div class="mb-4 functions">
-      <el-button type="primary" style="min-width: 100px;margin: 0 auto;" :icon="Setting" @click="goSetting">设置</el-button>
-    </div>
-  </div>
 </template>
 
 <script setup lang="ts">
-import {computed, reactive, ref, Ref, toRaw, onMounted} from 'vue';
+import {computed, onMounted, reactive, Ref, ref, toRaw} from 'vue';
 import type {FormInstance, FormRules} from 'element-plus';
 import {Setting} from '@element-plus/icons-vue';
 import {useRouter} from "vue-router";
+import {app} from "@tauri-apps/api";
 import {load, Store} from '@tauri-apps/plugin-store';
-import {IAccount, IClientConf} from "/@/models/setting.model.ts";
+import {ClientConf, IAccount, IClientConf} from "/@/models/setting.model.ts";
 import proxmoxApi from "/@/pve/constructor.ts";
 import {error, info} from "@tauri-apps/plugin-log";
-import {flattenDeep} from "lodash";
+import {defaults, flattenDeep} from "lodash";
 import {Proxmox} from "/@/pve";
-import {cidrSubnet, isV4Format} from 'ip';
+import {cidrSubnet} from 'ip';
 import {PveInterface} from "/@/models/pve.model.ts";
-import {connect} from "/@/utils/freerdp.ts";
 import {checkForAppUpdates} from '/@/utils/updater.ts'
+import {RdpClientFactory} from "/@/utils/rdp/RdpClientFactory.ts";
+
+const version = ref("");
 
 onMounted(async () => {
+  version.value = await app.getVersion();
+  const tauriVersion = await app.getTauriVersion();
+  await info(`appVersion: ${version.value}, tauriVersion: ${tauriVersion}`);
+  const store = await Store.load('store.json');
+  let account = await store.get<IAccount>('account');
+  if (account?.remember) {
+    ruleForm.username = account?.username || '';
+    ruleForm.password = account?.password || '';
+    ruleForm.remember = account.remember || false;
+  }
+  let clientConf = await store.get<IClientConf>('client');
+  if (!clientConf?.clientType) {
+    clientConf = defaults(clientConf, new ClientConf());
+    await store.set('client', {
+      ...clientConf,
+      additionalOptions: clientConf?.additionalOptions || ''
+    });
+  }
+
+  if (!clientConf?.serverAddr) {
+    ElMessage({
+      message: '请先配置服务器IP地址！',
+      type: 'warning',
+    })
+    goSetting();
+  }
+
   await checkForAppUpdates();
 })
 
@@ -97,39 +118,12 @@ const getVmIcon = computed(() => (vm: Proxmox.clusterResourcesResources) => {
 const ruleFormRef = ref<FormInstance>();
 
 const ruleForm = reactive({
-  serverAddr: '',
   username: '',
   password: '',
   remember: false,
 });
 
-Store.load('store.json').then(store => {
-  store.get<IAccount>('account').then((res) => {
-    if (res && res.remember) {
-      ruleForm.serverAddr = res.serverAddr || '';
-      ruleForm.username = res.username || '';
-      ruleForm.password = res.password || '';
-      ruleForm.remember = res.remember || false;
-    }
-  });
-});
-
-const validateServerAddr = (rule: any, value: String, callback: any) => {
-  if (value.trim() === '') {
-    callback(new Error('请输入服务器IP地址'));
-    return;
-  }
-  const [ip, port = '8006'] = value.split(':');
-  let portRegExp = /^(?:6553[0-5]|655[0-2][0-9]|65[0-4][0-9]{2}|6[0-4][0-9]{3}|[1-5][0-9]{4}|[1-9][0-9]{1,3}|[1-9])$/;
-  if (isV4Format(ip.trim()) && portRegExp.test(port.trim())) {
-    callback();
-  } else {
-    callback(new Error('请输入有效的服务器IP地址'));
-  }
-}
-
 const rules = reactive<FormRules<typeof ruleForm>>({
-  serverAddr: [{validator: validateServerAddr, trigger: 'blur'}],
   username: [{required: true, message: '请输入用户名', trigger: 'blur'}],
   password: [{required: true, message: '请输入密码', trigger: 'blur'}],
 });
@@ -178,8 +172,9 @@ const connectRdp = async (vm: Proxmox.clusterResourcesResources) => {
     }, 5000);
     return;
   }
-
-  const [host] = ruleForm.serverAddr.split(':');
+  const store = await Store.load('store.json')
+  const clientConf = await store.get<IClientConf>('client')
+  const [host] = clientConf!.serverAddr.split(':');
 
   const conf = await proxmox.nodes.$(vm.node!).qemu.$(vm.vmid!).config.$get();
   if (!conf.ostype?.startsWith('win')) {
@@ -225,7 +220,7 @@ const connectRdp = async (vm: Proxmox.clusterResourcesResources) => {
       return;
     }
 
-    await connect(findLast['ip-address'], ruleForm.username, ruleForm.password, clientConf);
+    await RdpClientFactory.create(findLast['ip-address'], ruleForm.username, ruleForm.password, clientConf).connect();
   } catch (err) {
     fullscreenLoading.value = false;
     await info(`${vm.name} get network interfaces error: ${err}`);
@@ -256,6 +251,7 @@ const loadVmList = async () => {
 
 const submitForm = async (formEl: FormInstance | undefined) => {
   fullscreenLoading.value = true;
+
   await info(`login params: ${JSON.stringify(toRaw(ruleForm))}`);
   if (!formEl) {
     fullscreenLoading.value = false;
@@ -282,13 +278,17 @@ const submitForm = async (formEl: FormInstance | undefined) => {
     return;
   }
 
-  const [host, port = '8006'] = ruleForm.serverAddr.split(':');
+  await info('save account info')
+  const store = await load('store.json');
+
+  const clientConf = await store.get<IClientConf>('client');
+  console.log(clientConf);
+
+  const [host, port = '8006'] = clientConf!.serverAddr.split(':');
 
   try {
     // 记住账号
     if (ruleForm.remember) {
-      await info('save account info')
-      const store = await load('store.json');
       await store.set('account', toRaw(ruleForm));
     }
   } catch (e) {
@@ -336,9 +336,26 @@ const goSetting = () => {
 .icon-header {
   text-align: center;
 
+  .setting-btn {
+    position: absolute;
+    right: 20px;
+    top: 5px;
+
+    :deep(.el-icon) {
+      font-size: 20px;
+    }
+  }
+
+  .version {
+    position: absolute;
+    right: 5px;
+    bottom: 0;
+    color: gray;
+  }
+
   .icon {
-    width: 160px;
-    height: 160px;
+    width: 180px;
+    height: 120px;
   }
 
   .title {
@@ -387,10 +404,5 @@ const goSetting = () => {
     flex-shrink: 0;
     margin-bottom: 20px;
   }
-}
-
-.footer {
-  display: flex;
-  justify-content: center;
 }
 </style>

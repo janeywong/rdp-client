@@ -13,8 +13,8 @@
     "windows": [
       {
         "title": "海牛智能云桌面",
-        "width": 820,
-        "height": 650
+        "width": 650,
+        "height": 550
       }
     ],
     "security": {

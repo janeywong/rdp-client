@@ -11,11 +11,11 @@ console.log(__dirname);
     const tomlPath = resolve(__dirname, "..", "src-tauri", "Cargo.toml");
     const lockPath = resolve(__dirname, "..", "src-tauri", "Cargo.lock");
     const tauriConfigPath = resolve(__dirname, "..", "src-tauri", "tauri.conf.json");
-    let content = readFileSync(tauriConfigPath, "utf-8");
-    const jsonData = {...JSON.parse(content), version};
-    console.log(jsonData);
 
-    writeFileSync(tauriConfigPath, JSON.stringify(jsonData, null, 2));
+    writeFileSync(tauriConfigPath, JSON.stringify({
+        ...JSON.parse(readFileSync(tauriConfigPath, "utf-8")),
+        version
+    }, null, 2));
 
     for (const path of [tomlPath, lockPath]) {
         let content = readFileSync(path, "utf-8");
