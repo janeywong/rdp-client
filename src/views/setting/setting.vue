@@ -102,11 +102,17 @@ const handleUseMultiMonChange = value => {
 }
 
 const onSubmit = async (formEl: FormInstance | undefined) => {
-  try{
+  if (!formEl) {
+    ElMessage({
+      message: '参数异常，请重启应用后重试！',
+      type: 'warning',
+    });
+    return;
+  }
+  try {
     const valid = await formEl.validate();
     console.log(valid);
-  }catch(e){
-    console.log(e);
+  } catch (e) {
     ElMessage({
       message: '表单验证失败！',
       type: 'warning',
@@ -140,7 +146,8 @@ const onReturn = () => {
 
 <template>
   <div class="form-container">
-    <el-form ref="ruleFormRef" :model="form" :rules="rules" label-width="180" label-position="right" style="max-width: 600px">
+    <el-form ref="ruleFormRef" :model="form" :rules="rules" label-width="180" label-position="right"
+             style="max-width: 600px">
       <el-form-item label="客户端">
         <el-radio-group v-model="form.clientType">
           <el-tooltip v-for="item in RdpClientOptions" :content="item.tip" placement="top">
