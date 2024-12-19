@@ -72,6 +72,7 @@ import {cidrSubnet} from 'ip';
 import {PveInterface} from "/@/models/pve.model.ts";
 import {checkForAppUpdates} from '/@/utils/updater.ts'
 import {RdpClientFactory} from "/@/utils/rdp/RdpClientFactory.ts";
+import {invoke} from "@tauri-apps/api/core";
 
 const version = ref("");
 
@@ -220,6 +221,8 @@ const connectRdp = async (vm: Proxmox.clusterResourcesResources) => {
       return;
     }
 
+    const saveRegistry = await invoke("saveRegistry", {ip: findLast['ip-address']});
+    await info(`saveRegistry result: ${saveRegistry}`);
     await RdpClientFactory.create(findLast['ip-address'], ruleForm.username, ruleForm.password, clientConf).connect();
   } catch (err) {
     fullscreenLoading.value = false;

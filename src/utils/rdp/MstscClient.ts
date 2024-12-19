@@ -13,10 +13,6 @@ export class MstscClient extends IRdpClient {
         super(server, username, password, conf);
     }
 
-    test() {
-        console.log("MstscClient", this.username, this.password, this.conf);
-    }
-
     async parseCommand(): Promise<string> {
         let rdpFileTemplate = `winposstr:s:0,1,0,0,1296,838
 compression:i:1
@@ -129,7 +125,6 @@ enablerdsaadauth:i:0
 
         const rdpFilePath = await this.parseCommand();
         if (platform === 'windows') {
-        // if (platform === 'macos') {
             cmd = 'powershell.exe';
             // 添加windows凭证
             args.push(`cmdkey /generic:"TERMSRV/${this.server}" /user:"${this.username}" /pass:"${this.password}";`);
@@ -146,7 +141,7 @@ enablerdsaadauth:i:0
 
         await info(`execute command: ${cmd} ${args.join(' ')}`)
 
-        const command = Command.create('exec-sh', args);
+        const command = Command.create('exec-sh', args, {encoding: 'utf8'});
 
         const {stdout, stderr} = await command.execute();
         await info(`${this.conf?.clientType} connect stdout: ${stdout}'`);

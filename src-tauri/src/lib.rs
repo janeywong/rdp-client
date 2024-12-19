@@ -1,14 +1,48 @@
 use serde_json::json;
-use tauri::Manager;
 use tauri_plugin_log::{Target, TargetKind};
-use tauri_plugin_shell::ShellExt;
 use tauri_plugin_store::StoreExt;
 use time::{format_description, OffsetDateTime, UtcOffset};
+#[cfg(target_os = "windows")]
+use std::path::Path;
+#[cfg(target_os = "windows")]
+use winreg::{
+    enums::*,
+    RegKey,
+};
+#[cfg(not(target_os = "windows"))]
+use tauri::Manager;
+#[cfg(not(target_os = "windows"))]
+use tauri_plugin_shell::ShellExt;
 
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
+}
+
+#[tauri::command]
+fn save_registry(ip: &str) -> Result<String, tauri::Error> {
+    log::info!("{} 准备保存注册表", ip);
+    #[cfg(target_os = "windows")]
+    {
+        let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+        let path = Path::new("Software").join("Microsoft").join("Terminal Server Client").join("LocalDevices");
+        let (key, disp) = hkcu.create_subkey(&path)?;
+
+        match disp {
+            REG_CREATED_NEW_KEY => log::info!("new key has been created: {:?}", key),
+            REG_OPENED_EXISTING_KEY => log::info!("key has been opened: {:?}", key)
+        }
+
+        key.set_value(ip, &1023u32)?;
+        let dword_val: u32 = key.get_value(ip)?;
+        log::info!("{} = {}", ip, dword_val);
+        Ok(format!("{} = {}", ip, dword_val).into())
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        Ok("当前系统不是windows系统，不需要操作注册表".into())
+    }
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -37,7 +71,7 @@ pub fn run() {
                                 &format_description::parse(
                                     "[year]-[month]-[day] [hour]:[minute]:[second]"
                                 )
-                                .unwrap()
+                                    .unwrap()
                             )
                             .unwrap(),
                         record.level(),
@@ -50,7 +84,7 @@ pub fn run() {
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
-        .invoke_handler(tauri::generate_handler![greet])
+        .invoke_handler(tauri::generate_handler![greet, save_registry])
         .setup(|app| {
             #[cfg(debug_assertions)] // 仅在调试构建时包含此代码
             {
