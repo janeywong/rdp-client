@@ -221,8 +221,8 @@ const connectRdp = async (vm: Proxmox.clusterResourcesResources) => {
       return;
     }
 
-    const saveRegistry = await invoke("saveRegistry", {ip: findLast['ip-address']});
-    await info(`saveRegistry result: ${saveRegistry}`);
+    const saveRegistry = await invoke("save_registry", {ip: findLast['ip-address']});
+    await info(`save_registry result: ${saveRegistry}`);
     await RdpClientFactory.create(findLast['ip-address'], ruleForm.username, ruleForm.password, clientConf).connect();
   } catch (err) {
     fullscreenLoading.value = false;
