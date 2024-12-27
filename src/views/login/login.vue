@@ -65,7 +65,7 @@ import {app} from "@tauri-apps/api";
 import {load, Store} from '@tauri-apps/plugin-store';
 import {ClientConf, IAccount, IClientConf} from "/@/models/setting.model.ts";
 import proxmoxApi from "/@/pve/constructor.ts";
-import {error, info} from "@tauri-apps/plugin-log";
+import {error, info, warn} from "@tauri-apps/plugin-log";
 import {defaults, flattenDeep} from "lodash";
 import {Proxmox} from "/@/pve";
 import {cidrSubnet} from 'ip';
@@ -221,8 +221,8 @@ const connectRdp = async (vm: Proxmox.clusterResourcesResources) => {
       return;
     }
 
-    const saveRegistry = await invoke("saveRegistry", {ip: findLast['ip-address']});
-    await info(`saveRegistry result: ${saveRegistry}`);
+    const saveRegistry = await invoke("save_registry", {ip: findLast['ip-address']});
+    await info(`save_registry result: ${saveRegistry}`);
     await RdpClientFactory.create(findLast['ip-address'], ruleForm.username, ruleForm.password, clientConf).connect();
   } catch (err) {
     fullscreenLoading.value = false;
@@ -288,6 +288,17 @@ const submitForm = async (formEl: FormInstance | undefined) => {
   console.log(clientConf);
 
   const [host, port = '8006'] = clientConf!.serverAddr.split(':');
+
+  const result = await invoke("check_pve", {ip: host})
+  if(!result){
+    fullscreenLoading.value = false;
+    ElMessage({
+      message: '服务器验证失败，请联系管理员！',
+      type: 'warning',
+    });
+    await warn(`${host} 服务器验证失败`);
+    return;
+  }
 
   try {
     // 记住账号

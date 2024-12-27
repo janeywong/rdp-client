@@ -35,6 +35,7 @@ export interface IClientConf {
     additionalOptions?: string;
     // 悬浮条
     floatbar: boolean;
+    drivestoredirect: string[];
 }
 
 export class ClientConf implements IClientConf {
@@ -55,6 +56,7 @@ export class ClientConf implements IClientConf {
         public resolution: string = '/f',
         public cert: string = 'ignore',
         public floatbar: boolean = true,
+        public drivestoredirect: string[] = [],
     ){
         this.serverAddr = serverAddr;
         this.clientType = clientType;
@@ -72,5 +74,6 @@ export class ClientConf implements IClientConf {
         this.resolution = resolution;
         this.cert = cert;
         this.floatbar = floatbar;
+        this.drivestoredirect = drivestoredirect;
     }
 }

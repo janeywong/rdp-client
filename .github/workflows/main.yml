@@ -43,8 +43,8 @@ jobs:
             const { data } = await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              tag_name: `rdp-client-v${process.env.PACKAGE_VERSION}`,
-              name: `Rdp Client v${process.env.PACKAGE_VERSION}`,
+              tag_name: `hi-new-v${process.env.PACKAGE_VERSION}`,
+              name: `hi new v${process.env.PACKAGE_VERSION}`,
               body: 'Take a look at the assets to download and install this app.',
               draft: true,
               prerelease: false

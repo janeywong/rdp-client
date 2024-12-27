@@ -15,6 +15,8 @@ import {IClientConf} from "/@/models/setting.model.ts";
 import {platform} from "@tauri-apps/plugin-os";
 import type {FormInstance, FormRules} from "element-plus";
 import {isV4Format} from "ip";
+import {loadLogicalDisk} from "/@/utils/rdp/WindowsUtil.ts";
+import {info} from "@tauri-apps/plugin-log";
 
 const currentPlatform = ref("");
 const redirectOptions = computed(() => {
@@ -22,6 +24,7 @@ const redirectOptions = computed(() => {
 });
 
 const defaultRedirect: number[] = [8, 16, 32, 64, 128];
+let defaultDriveStoreDirect: string[] = [];
 const ruleFormRef = ref<FormInstance>();
 
 const form = reactive({
@@ -40,12 +43,18 @@ const form = reactive({
   adminMode: false,
   resolution: '/f',
   cert: 'ignore',
-  floatbar: false
+  floatbar: false,
+  drivestoredirect: defaultDriveStoreDirect,
 });
+
+let logicalDiskOptions: ({ label: string, value: string, type: number })[] = [];
 
 onMounted(async () => {
   currentPlatform.value = await platform();
-  console.log(currentPlatform.value);
+  if (currentPlatform.value === 'windows') {
+    // windows 加载系统盘符测试
+    logicalDiskOptions = await loadLogicalDisk();
+  }
   // 配置文件加载配置
   const store = await Store.load('store.json')
   const clientConf = await store.get<IClientConf>('client')
@@ -66,6 +75,13 @@ onMounted(async () => {
     form.resolution = clientConf.resolution || '/f';
     form.cert = clientConf.cert || 'ignore';
     form.floatbar = clientConf.floatbar ?? false;
+    form.drivestoredirect = clientConf.drivestoredirect;
+    if (currentPlatform.value === 'windows' && (!clientConf.drivestoredirect || (Array.isArray(clientConf.drivestoredirect) && clientConf.drivestoredirect.length === 0))) {
+      // 驱动器默认选择移动U盘
+      defaultDriveStoreDirect = logicalDiskOptions.filter(item => item.type === 2).map(item => item.value);
+      await info(`驱动器默认选中：${defaultDriveStoreDirect.join(',')}`);
+      form.drivestoredirect = defaultDriveStoreDirect;
+    }
   }
 })
 
@@ -111,7 +127,7 @@ const onSubmit = async (formEl: FormInstance | undefined) => {
   }
   try {
     const valid = await formEl.validate();
-    console.log(valid);
+    console.log(valid, toRaw(form));
   } catch (e) {
     ElMessage({
       message: '表单验证失败！',
@@ -210,7 +226,7 @@ const onReturn = () => {
               />
             </el-select>
           </el-form-item>
-          <el-form-item label="全屏显示时显示连接栏">
+          <el-form-item label="全屏显示时显示连接栏" v-if="form.clientType=='freerdp'">
             <el-switch v-model="form.floatbar" size="default" :disabled="form.useMultiMon"/>
           </el-form-item>
           <el-form-item label="使会话适应窗口大小" v-if="currentPlatform == 'macos'">
@@ -234,6 +250,17 @@ const onReturn = () => {
                   name="redirect"
                   class="redirect-checkbox"
                   v-for="item in redirectOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+              />
+            </el-checkbox-group>
+          </el-form-item>
+          <el-form-item label="驱动器" v-if="currentPlatform == 'windows'">
+            <el-checkbox-group class="logical-disk-group" v-model="form.drivestoredirect">
+              <el-checkbox
+                  name="driveStoreDirect"
+                  v-for="item in logicalDiskOptions"
                   :key="item.value"
                   :label="item.label"
                   :value="item.value"
@@ -292,6 +319,10 @@ const onReturn = () => {
 
   .local-group {
     width: 210px;
+  }
+
+  .logical-disk-group {
+    width: 80px;
   }
 }
 </style>

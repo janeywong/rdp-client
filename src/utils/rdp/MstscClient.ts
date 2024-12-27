@@ -7,6 +7,7 @@ import {BaseDirectory, tempDir} from '@tauri-apps/api/path';
 import {path} from "@tauri-apps/api";
 import {Command} from "@tauri-apps/plugin-shell";
 import {info} from "@tauri-apps/plugin-log";
+import {tradeDriveValue} from "/@/utils/rdp/WindowsUtil.ts";
 
 export class MstscClient extends IRdpClient {
     constructor(server: string, username: string, password: string, conf: IClientConf) {
@@ -83,11 +84,16 @@ enablerdsaadauth:i:0
         // 颜色质量
         rdpFileTemplate += `session bpp:i:${this.conf.bpp}\n`;
         // 全屏显示时显示连接栏 0：不显示。1：显示
-        rdpFileTemplate += `displayconnectionbar:i:${this.conf.floatbar ? 1 : 0}\n`;
+        // mstsc全屏显示时不显示连接栏，开始菜单那里能断开
+        rdpFileTemplate += `displayconnectionbar:i:0\n`;
 
         // 重定向
-        // 驱动器 fixme windows 可由用户选择
-        rdpFileTemplate += `drivestoredirect:s:${this.checkRedirect(RdpRedirect.DRIVER) ? '*' : ''}\n`;
+        // 驱动器
+        if (platform !== 'windows') {
+            rdpFileTemplate += `drivestoredirect:s:${this.checkRedirect(RdpRedirect.DRIVER) ? '*' : ''}\n`;
+        } else {
+            rdpFileTemplate += `drivestoredirect:s:${tradeDriveValue(this.conf.drivestoredirect)}\n`;
+        }
         // 打印机 0：本地设备上的打印机不会重定向到远程会话。1：本地设备上的打印机会重定向到远程会话。
         rdpFileTemplate += `redirectprinters:i:${this.checkRedirect(RdpRedirect.PRINTER) ? 1 : 0}\n`;
         // 智能卡 0：本地设备上的智能卡不会重定向到远程会话。1：本地设备上的智能卡会重定向到远程会话。
@@ -139,9 +145,9 @@ enablerdsaadauth:i:0
             args.push(rdpFilePath);
         }
 
-        await info(`execute command: ${cmd} ${args.join(' ')}`)
+        await info(`execute command: ${cmd} ${args.join(' ')}`);
 
-        const command = Command.create('exec-sh', args, {encoding: 'utf8'});
+        const command = Command.create('exec-sh', args, {encoding: 'GB2312'});
 
         const {stdout, stderr} = await command.execute();
         await info(`${this.conf?.clientType} connect stdout: ${stdout}'`);

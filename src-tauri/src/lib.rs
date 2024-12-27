@@ -20,6 +20,25 @@ fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
+/// 后续通过license控制
+///
+/// # Arguments
+///
+/// * `ip`:
+///
+/// returns: bool
+///
+/// # Examples
+///
+/// ```
+///
+/// ```
+#[tauri::command]
+fn check_pve(ip: &str) -> bool {
+    let v = vec!["192.168.1.210", "10.10.10.2"];
+    v.contains(&ip)
+}
+
 #[tauri::command]
 fn save_registry(ip: &str) -> Result<String, tauri::Error> {
     log::info!("{} 准备保存注册表", ip);
@@ -84,7 +103,7 @@ pub fn run() {
         .plugin(tauri_plugin_store::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
-        .invoke_handler(tauri::generate_handler![greet, save_registry])
+        .invoke_handler(tauri::generate_handler![greet, save_registry, check_pve])
         .setup(|app| {
             #[cfg(debug_assertions)] // 仅在调试构建时包含此代码
             {
