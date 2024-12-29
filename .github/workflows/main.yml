@@ -140,20 +140,20 @@ jobs:
     needs: [create-release, build-tauri]
 
     steps:
-      - name: publish release
-        id: publish-release
-        uses: actions/github-script@v6
-        env:
-          release_id: ${{ needs.create-release.outputs.release_id }}
-        with:
-          script: |
-            github.rest.repos.updateRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              release_id: process.env.release_id,
-              draft: false,
-              prerelease: false
-            })
+#      - name: publish release
+#        id: publish-release
+#        uses: actions/github-script@v6
+#        env:
+#          release_id: ${{ needs.create-release.outputs.release_id }}
+#        with:
+#          script: |
+#            github.rest.repos.updateRelease({
+#              owner: context.repo.owner,
+#              repo: context.repo.repo,
+#              release_id: process.env.release_id,
+#              draft: false,
+#              prerelease: false
+#            })
 
       - uses: actions/checkout@v4
 
