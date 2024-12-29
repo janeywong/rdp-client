@@ -37,6 +37,8 @@ if (errors.length > 0) {
     process.exit(1);
 }
 
+
+
 console.log(`REPOSITORY_NAME: ${REPOSITORY_NAME}, REPOSITORY_OWNER: ${REPOSITORY_OWNER}, QN_BUCKET: ${QN_BUCKET}, QN_PREFIX: ${QN_PREFIX}, QN_PUBLIC_URL: ${QN_PUBLIC_URL}`);
 
 const octokit = new Octokit({
