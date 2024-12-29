@@ -86,6 +86,7 @@ enablerdsaadauth:i:0
         // 全屏显示时显示连接栏 0：不显示。1：显示
         // mstsc全屏显示时不显示连接栏，开始菜单那里能断开
         rdpFileTemplate += `displayconnectionbar:i:0\n`;
+        rdpFileTemplate += `pinconnectionbar:i:0\n`;
 
         // 重定向
         // 驱动器
