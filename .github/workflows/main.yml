@@ -119,6 +119,7 @@ jobs:
         with:
           releaseId: ${{ needs.create-release.outputs.release_id }}
           args: ${{ matrix.args }}
+          includeRelease: true
 
       - name: Run publish script
         run: pnpm run publisher
