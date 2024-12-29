@@ -9,10 +9,13 @@
     "release": "release-it",
     "preview": "vite preview",
     "tauri": "tauri",
-    "publisher": "tsx scripts/publish.ts"
+    "publisher": "tsx scripts/publish.ts",
+    "publish-qiniu": "tsc scripts/publish-qiniu.ts"
   },
   "dependencies": {
+    "@actions/core": "^1.10.1",
     "@element-plus/icons-vue": "^2.3.1",
+    "@octokit/rest": "^21.0.2",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-dialog": "~2",
     "@tauri-apps/plugin-fs": "~2",
@@ -26,8 +29,11 @@
     "buffer": "^6.0.3",
     "dayjs": "^1.11.13",
     "element-plus": "^2.8.7",
+    "glob": "^10.3.10",
     "ip": "^2.0.1",
     "lodash": "^4.17.21",
+    "qiniu": "^7.11.0",
+    "semaphore-promise": "^1.4.2",
     "vue": "^3.3.4",
     "vue-router": "^4.4.5"
   },

@@ -22,6 +22,7 @@ console.log(__dirname);
 
         const regexp = new RegExp(
             `(name\\s*=\\s*"${name}"\\s*version\\s*=\\s*)"(\\d+\\.\\d+\\.\\d+(-\\w+\\.\\d+)?)"`,
+            'i'
         );
 
         content = content.replace(regexp, `$1"${version}"`);
