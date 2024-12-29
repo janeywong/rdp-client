@@ -120,14 +120,12 @@ jobs:
           releaseId: ${{ needs.create-release.outputs.release_id }}
           args: ${{ matrix.args }}
 
-      - name: Debug Step - artifactPaths
-        # if: ${{ ( github.event_name == 'schedule' ) || ( ! startsWith(github.ref, 'refs/heads/release') ) }}
-        continue-on-error: true
+      - name: Run publish script
+        run: pnpm run publisher
         env:
-          artifactPaths: ${{ steps.build.outputs.artifactPaths }}
-        shell: bash
-        run: |
-          echo -e "Artifact paths: \n${{ join(fromJSON( env.artifactPaths ), '\n') }}"
+          ARTIFACT_PATHS: ${{ steps.build.outputs.artifactPaths }}
+          PLATFORM: ${{ matrix.platform }}
+          TARGET: ${{ matrix.args }}
 
   publish-release:
     permissions:

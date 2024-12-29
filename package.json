@@ -8,7 +8,8 @@
     "build": "vue-tsc --noEmit && vite build",
     "release": "release-it",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "publisher": "tsx scripts/publish.ts"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.1",
