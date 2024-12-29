@@ -154,7 +154,8 @@ jobs:
               draft: false,
               prerelease: false
             })
-            - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
 
       - name: setup node
         uses: actions/setup-node@v4
