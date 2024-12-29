@@ -40,24 +40,24 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: get version
-        run: echo "PACKAGE_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+#      - name: get version
+#        run: echo "PACKAGE_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
 
-      - name: create release
-        id: create-release
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const { data } = await github.rest.repos.createRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              tag_name: `hi-new-v${process.env.PACKAGE_VERSION}`,
-              name: `hi new v${process.env.PACKAGE_VERSION}`,
-              body: 'Take a look at the assets to download and install this app.',
-              draft: true,
-              prerelease: false
-            })
-            return data.id
+#      - name: create release
+#        id: create-release
+#        uses: actions/github-script@v6
+#        with:
+#          script: |
+#            const { data } = await github.rest.repos.createRelease({
+#              owner: context.repo.owner,
+#              repo: context.repo.repo,
+#              tag_name: `hi-new-v${process.env.PACKAGE_VERSION}`,
+#              name: `hi new v${process.env.PACKAGE_VERSION}`,
+#              body: 'Take a look at the assets to download and install this app.',
+#              draft: true,
+#              prerelease: false
+#            })
+#            return data.id
 
   # 编译 Tauri
   build-tauri:
@@ -118,8 +118,13 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           releaseId: ${{ needs.create-release.outputs.release_id }}
-          args: ${{ matrix.args }}
+          tagName: ${{ github.ref_name }}
+          releaseName: HINEW ${{ needs.create-release.outputs.APP_VERSION }}
+          releaseBody: ""
           includeRelease: true
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}
 
       - name: Run publish script
         run: pnpm run publisher
