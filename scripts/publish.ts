@@ -6,6 +6,10 @@ const target = process.env.TARGET;
 const platform = process.env.PLATFORM;
 const workspace = process.env.WORKSPACE;
 
+console.log(`workspace ${workspace} files: ${fs.readdirSync(workspace)}`);
+console.log(`workspace ${workspace}/src-tauri files: ${fs.readdirSync(path.join(workspace, 'src-tauri'))}`);
+console.log(`workspace ${workspace}/src-tauri/target files: ${fs.readdirSync(path.join(workspace, 'src-tauri', 'target'))}`);
+
 const parsedPaths = JSON.parse(artifact_paths);
 const artifactPaths = Array.isArray(parsedPaths) ? parsedPaths : [parsedPaths]; // 将单个路径转为数组
 
