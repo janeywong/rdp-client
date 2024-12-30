@@ -179,5 +179,5 @@ jobs:
           QN_BUCKET: mission
           QN_PREFIX: hinew
           QN_PUBLIC_URL: https://cdn.medrd.net
-          REPOSITORY_OWNER: context.repo.owner
-          REPOSITORY_NAME: context.repo.repo
+          REPOSITORY_OWNER: janeywong
+          REPOSITORY_NAME: HINEW
