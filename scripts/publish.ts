@@ -7,24 +7,13 @@ const platform = process.env.PLATFORM;
 const workspace = process.env.WORKSPACE;
 
 console.log(`workspace ${workspace} files: ${fs.readdirSync(workspace)}`);
-console.log(`workspace ${workspace}/src-tauri files: ${fs.readdirSync(path.join(workspace, 'src-tauri'))}`);
-console.log(`workspace ${workspace}/src-tauri/target files: ${fs.readdirSync(path.join(workspace, 'src-tauri', 'target'))}`);
+
+console.log('latest.json content: ', fs.readFileSync(path.join(workspace, "latest.json"), "utf-8"));
 
 const parsedPaths = JSON.parse(artifact_paths);
 const artifactPaths = Array.isArray(parsedPaths) ? parsedPaths : [parsedPaths]; // 将单个路径转为数组
 
 // 确保传入的是文件路径而不是目录路径
-const file_paths = artifactPaths.filter((file) => {
-    let filepath = path.dirname(path.dirname(file));
-    let readdirSync = fs.readdirSync(filepath);
-    console.log(`path: ${filepath}, files: [${readdirSync}]`);
-    filepath = path.dirname(filepath);
-    readdirSync = fs.readdirSync(filepath);
-    console.log(`path: ${filepath}, files: [${readdirSync}]`);
-    filepath = path.dirname(filepath);
-    readdirSync = fs.readdirSync(filepath);
-    console.log(`path: ${filepath}, files: [${readdirSync}]`);
-    return fs.statSync(file).isFile();
-});
+const file_paths = artifactPaths.filter((file) => fs.statSync(file).isFile());
 
 console.log(`workspace: ${workspace}, target=${target}, platform=${platform}, file_paths=${file_paths}`);
