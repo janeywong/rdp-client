@@ -132,6 +132,7 @@ jobs:
           ARTIFACT_PATHS: ${{ steps.build.outputs.artifactPaths }}
           PLATFORM: ${{ matrix.platform }}
           TARGET: ${{ matrix.args }}
+          WORKSPACE: ${{ github.workspace }}
 
   publish-release:
     permissions:
