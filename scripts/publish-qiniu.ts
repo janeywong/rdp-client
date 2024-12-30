@@ -53,6 +53,8 @@ export async function main() {
         repo: REPOSITORY_NAME,
     });
 
+    console.log('latestRelease', latestRelease);
+
     const latestJsonBinary = await octokit.repos.getReleaseAsset({
         owner: REPOSITORY_OWNER,
         repo: REPOSITORY_NAME,
