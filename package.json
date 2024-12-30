@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "publisher": "tsx scripts/publish.ts",
-    "publish-qiniu": "tsc scripts/publish-qiniu.ts"
+    "publish-qiniu": "tsx scripts/publish-qiniu.ts"
   },
   "dependencies": {
     "@actions/core": "^1.10.1",

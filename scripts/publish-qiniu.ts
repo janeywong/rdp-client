@@ -1,5 +1,9 @@
 import {Octokit} from "@octokit/rest";
 
+console.log("test script");
+
+console.log(process.env);
+
 const errors: string[] = [];
 
 const [
@@ -24,6 +28,7 @@ const [
     ] as const
 ).map((v) => {
     const value = process.env[v];
+    console.log(v, value);
     if (!value) {
         errors.push(`${v} is not set`);
     }
@@ -69,6 +74,4 @@ export async function main() {
     console.log(latestJson);
 }
 
-main().catch(error => {
-    console.error(error)
-});
+main().catch(reason => console.log(reason));
