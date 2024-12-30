@@ -14,8 +14,6 @@ const [
 ] = (
     [
         "GITHUB_TOKEN",
-        "GIST_TOKEN",
-        "GIST_ID",
         "REPOSITORY_NAME",
         "REPOSITORY_OWNER",
         "QN_ACCESS_KEY",
@@ -36,8 +34,6 @@ if (errors.length > 0) {
     console.error(errors.join("\n"));
     process.exit(1);
 }
-
-
 
 console.log(`REPOSITORY_NAME: ${REPOSITORY_NAME}, REPOSITORY_OWNER: ${REPOSITORY_OWNER}, QN_BUCKET: ${QN_BUCKET}, QN_PREFIX: ${QN_PREFIX}, QN_PUBLIC_URL: ${QN_PUBLIC_URL}`);
 
