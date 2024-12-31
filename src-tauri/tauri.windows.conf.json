@@ -5,6 +5,9 @@
       "binaries/freerdp"
     ],
     "windows": {
+      "wix": {
+        "language": "zh-CN"
+      },
       "nsis": {
         "installMode": "perMachine",
         "languages": ["SimpChinese"]
