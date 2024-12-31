@@ -126,6 +126,7 @@ jobs:
 
       # 执行构建，以及推送 github release
       - name: Build the app
+        id: build
         uses: tauri-apps/tauri-action@v0
         env:
           CI: false
