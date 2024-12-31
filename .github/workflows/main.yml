@@ -13,12 +13,7 @@ on:
 
 jobs:
   create-release:
-    permissions:
-      contents: write
     runs-on: ubuntu-latest
-    outputs:
-      release_id: ${{ steps.create-release.outputs.result }}
-
     steps:
       - uses: actions/checkout@v4
         with:
@@ -28,17 +23,17 @@ jobs:
         run: echo "tag=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
 
       # 安装 Node.js
-      - name: setup node
+      - name: Setup node
         uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: 20
 
       # 发布 Release，使用自定义名称
       - name: Generate changelog
         id: create_release
         run: npx changelogithub --draft --name ${{ steps.vars.outputs.tag }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
 
 #      - name: get version
 #        run: echo "PACKAGE_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
@@ -60,7 +55,7 @@ jobs:
 #            return data.id
 
   # 编译 Tauri
-  build-tauri:
+  build-app:
     needs: create-release
     permissions:
       contents: write
@@ -68,9 +63,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: "macos-latest" # for Arm based macs (M1 and above).
+          - platform: "macos-latest"
             target: "aarch64-apple-darwin"
-          - platform: "macos-latest" # for Intel based macs.
+          - platform: "macos-latest"
             target: "x86_64-apple-darwin"
 
           - platform: "windows-latest"
@@ -80,37 +75,33 @@ jobs:
           - platform: "windows-latest"
             target: "aarch64-pc-windows-msvc"
 
-          - platform: "ubuntu-22.04" # for Tauri v1 you could replace this with ubuntu-20.04.
+          - platform: "ubuntu-22.04"
             target: "x86_64-unknown-linux-gnu"
 
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: setup node
+      - name: Setup node
         uses: actions/setup-node@v4
         with:
-          node-version: lts/*
-
-      - uses: pnpm/action-setup@v4
-        name: Install pnpm
+          node-version: 20
+      - uses: pnpm/action-setup@v3
         with:
           version: latest
 
       - name: Install rust target
         run: rustup target add ${{ matrix.target }}
 
-      - name: install Rust stable
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: install dependencies (ubuntu only)
-        if: matrix.platform == 'ubuntu-22.04' # This must match the platform value defined above.
+      - name: Install dependencies (ubuntu only)
+        if: matrix.platform == 'ubuntu-22.04'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.0-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
-        # webkitgtk 4.0 is for Tauri v1 - webkitgtk 4.1 is for Tauri v2.
-        # You can remove the one that doesn't apply to your app to speed up the workflow a bit.
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      # 安装 Rust
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
 
       # 使用 Rust 缓存，加快安装速度
       - name: Rust cache
@@ -118,21 +109,28 @@ jobs:
         with:
           workspaces: target
 
-      - name: install frontend dependencies
-        run: pnpm install # change this to npm, pnpm or bun depending on which one you use.
+      # 获取 pnpm 缓存
+      - name: Sync node version and setup cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
 
-      - uses: tauri-apps/tauri-action@v0
-        id: build
+      # 安装依赖, 前端打包
+      - name: Install app dependencies and build web
+        run: pnpm install --frozen-lockfile
+
+      # 执行构建，以及推送 github release
+      - name: Build the app
+        uses: tauri-apps/tauri-action@v0
         env:
           CI: false
           PLATFORM: ${{ matrix.platform }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # 使用之前配置的私钥
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          # 使用之前配置的私钥密码
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
         with:
-          releaseId: ${{ needs.create-release.outputs.release_id }}
+#          releaseId: ${{ needs.create-release.outputs.release_id }}
           tagName: ${{ github.ref_name }}
           releaseName: HINEW ${{ needs.create-release.outputs.APP_VERSION }}
           releaseBody: ""
