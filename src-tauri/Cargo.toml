@@ -1,6 +1,6 @@
 [package]
 name = "HINEW"
-version = "1.0.17"
+version = "1.0.18"
 description = "A Windows Rdp Client App"
 authors = ["JJ"]
 edition = "2021"
