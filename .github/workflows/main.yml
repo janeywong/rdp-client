@@ -13,7 +13,11 @@ on:
 
 jobs:
   create-release:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
+    outputs:
+      release_id: ${{ steps.create-release.outputs.result }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -127,8 +131,8 @@ jobs:
           CI: false
           PLATFORM: ${{ matrix.platform }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
 #          releaseId: ${{ needs.create-release.outputs.release_id }}
           tagName: ${{ github.ref_name }}
