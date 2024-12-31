@@ -69,21 +69,24 @@ jobs:
       matrix:
         include:
           - platform: "macos-latest" # for Arm based macs (M1 and above).
-            args: "--target aarch64-apple-darwin"
+            target: "aarch64-apple-darwin"
           - platform: "macos-latest" # for Intel based macs.
-            args: "--target x86_64-apple-darwin"
+            target: "x86_64-apple-darwin"
+
+          - platform: "windows-latest"
+            target: "x86_64-pc-windows-msvc"
+          - platform: "windows-latest"
+            target: "i686-pc-windows-msvc"
+          - platform: "windows-latest"
+            target: "aarch64-pc-windows-msvc"
+
           - platform: "ubuntu-22.04" # for Tauri v1 you could replace this with ubuntu-20.04.
-            args: ""
-          - platform: "windows-latest"
-            target: "--target x86_64-pc-windows-msvc"
-          - platform: "windows-latest"
-            target: "--target i686-pc-windows-msvc"
-          - platform: "windows-latest"
-            target: "--target aarch64-pc-windows-msvc"
+            target: "x86_64-unknown-linux-gnu"
 
     runs-on: ${{ matrix.platform }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: setup node
         uses: actions/setup-node@v4
@@ -93,13 +96,13 @@ jobs:
       - uses: pnpm/action-setup@v4
         name: Install pnpm
         with:
-          version: 9.x.x
+          version: latest
+
+      - name: Install rust target
+        run: rustup target add ${{ matrix.target }}
 
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
-        with:
-          # Those targets are only used on macos runners so it's in an `if` to slightly speed up windows and linux builds.
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
       - name: install dependencies (ubuntu only)
         if: matrix.platform == 'ubuntu-22.04' # This must match the platform value defined above.
@@ -109,12 +112,20 @@ jobs:
         # webkitgtk 4.0 is for Tauri v1 - webkitgtk 4.1 is for Tauri v2.
         # You can remove the one that doesn't apply to your app to speed up the workflow a bit.
 
+      # 使用 Rust 缓存，加快安装速度
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: target
+
       - name: install frontend dependencies
         run: pnpm install # change this to npm, pnpm or bun depending on which one you use.
 
       - uses: tauri-apps/tauri-action@v0
         id: build
         env:
+          CI: false
+          PLATFORM: ${{ matrix.platform }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # 使用之前配置的私钥
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -128,14 +139,14 @@ jobs:
           includeRelease: true
           releaseDraft: true
           prerelease: false
-          args: ${{ matrix.args }}
+          args: --target ${{ matrix.target }}
 
       - name: Run publish script
         run: pnpm run publisher
         env:
           ARTIFACT_PATHS: ${{ steps.build.outputs.artifactPaths }}
           PLATFORM: ${{ matrix.platform }}
-          TARGET: ${{ matrix.args }}
+          TARGET: ${{ matrix.target }}
           WORKSPACE: ${{ github.workspace }}
 
   publish-release:
