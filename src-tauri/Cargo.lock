@@ -4,7 +4,7 @@ version = 3
 
 [[package]]
 name = "HINEW"
-version = "1.0.21"
+version = "1.0.22"
 dependencies = [
  "log",
  "serde",
