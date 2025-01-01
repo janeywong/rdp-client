@@ -39,6 +39,10 @@ async function run(): Promise<void> {
     const prefix = process.env.QN_PREFIX;
     const publicUrl = process.env.QN_PUBLIC_URL;
 
+    console.log('GITHUB_REF_NAME', process.env.GITHUB_REF_NAME);
+
+    console.log(process.env);
+
     let key = `${prefix}/${version}/${uploaderFilename}`;
     if (args) {
         key = `${prefix}/${version}/hi-new_${args}.app.tar.gz`;
