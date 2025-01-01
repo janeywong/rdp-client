@@ -39,25 +39,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-#      - name: get version
-#        run: echo "PACKAGE_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
-
-#      - name: create release
-#        id: create-release
-#        uses: actions/github-script@v6
-#        with:
-#          script: |
-#            const { data } = await github.rest.repos.createRelease({
-#              owner: context.repo.owner,
-#              repo: context.repo.repo,
-#              tag_name: `hi-new-v${process.env.PACKAGE_VERSION}`,
-#              name: `hi new v${process.env.PACKAGE_VERSION}`,
-#              body: 'Take a look at the assets to download and install this app.',
-#              draft: true,
-#              prerelease: false
-#            })
-#            return data.id
-
   # 编译 Tauri
   build-app:
     needs: create-release
@@ -69,8 +50,10 @@ jobs:
         include:
           - platform: "macos-latest"
             target: "aarch64-apple-darwin"
+            args: "aarch64"
           - platform: "macos-latest"
             target: "x86_64-apple-darwin"
+            args: "x64"
 
           - platform: "windows-latest"
             target: "x86_64-pc-windows-msvc"
@@ -148,9 +131,16 @@ jobs:
         run: pnpm run publisher
         env:
           ARTIFACT_PATHS: ${{ steps.build.outputs.artifactPaths }}
+          VERSION: ${{ steps.vars.outputs.tag }}
           PLATFORM: ${{ matrix.platform }}
           TARGET: ${{ matrix.target }}
+          ARGS: ${{ matrix.args }}
           WORKSPACE: ${{ github.workspace }}
+          QN_ACCESS_KEY: ${{ secrets.QN_ACCESS_KEY }}
+          QN_SECRET_KEY: ${{ secrets.QN_SECRET_KEY }}
+          QN_BUCKET: ${{ secrets.QN_BUCKET }}
+          QN_PREFIX: ${{ secrets.QN_PREFIX }}
+          QN_PUBLIC_URL: ${{ secrets.QN_PUBLIC_URL }}
 
   publish-release:
     permissions:
@@ -195,8 +185,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           QN_ACCESS_KEY: ${{ secrets.QN_ACCESS_KEY }}
           QN_SECRET_KEY: ${{ secrets.QN_SECRET_KEY }}
-          QN_BUCKET: mission
-          QN_PREFIX: hinew
-          QN_PUBLIC_URL: https://cdn.medrd.net
+          QN_BUCKET: ${{ secrets.QN_BUCKET }}
+          QN_PREFIX: ${{ secrets.QN_PREFIX }}
+          QN_PUBLIC_URL: ${{ secrets.QN_PUBLIC_URL }}
           REPOSITORY_OWNER: janeywong
           REPOSITORY_NAME: HINEW
